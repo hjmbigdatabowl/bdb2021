@@ -4,7 +4,12 @@
 \alias{tune_catch_prob_xgb}
 \title{tune_catch_prob_xgb tune the xgboost catch prob model}
 \usage{
-tune_catch_prob_xgb(data, mod = "", overnightmode = FALSE)
+tune_catch_prob_xgb(
+  data,
+  mod = "",
+  overnightmode = FALSE,
+  overnightcores = NULL
+)
 }
 \arguments{
 \item{data}{a full data frame to tune the model on}
@@ -12,6 +17,8 @@ tune_catch_prob_xgb(data, mod = "", overnightmode = FALSE)
 \item{mod}{'a' for arrival, 't' for throw}
 
 \item{overnightmode}{TRUE auto sets 4 cores}
+
+\item{overnightcores}{an integer for the number of cores to run on}
 }
 \value{
 a list with the data, the data_split, the workflow, the best set of tuning parameters, and the tuning results

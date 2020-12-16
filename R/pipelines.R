@@ -1,11 +1,13 @@
 #' run_catch_prob_tuning_pipeline runs the catch prob tuning pipeline
 #' @return null
 #' @param throw_or_arr the model (throwtime "t" or arrival time "a" to tune)
+#' @param overnightmode TRUE auto sets 4 cores
+#' @param overnightcores an integer for the number of cores to run on
 #' @importFrom magrittr %>%
 #' @importFrom dplyr sample_frac setdiff
 #' @export
 #'
-run_catch_prob_tuning_pipeline <- function(throw_or_arr = "") {
+run_catch_prob_tuning_pipeline <- function(throw_or_arr = "", overnightmode = TRUE, overnightcores = 4) {
   set.seed(14159)
   df <- switch (throw_or_arr,
                 't' = do_catch_prob_throw_feat_eng() %>%
@@ -28,7 +30,7 @@ run_catch_prob_tuning_pipeline <- function(throw_or_arr = "") {
   test <- df %>%
     setdiff(train)
 
-  catch_prob_tuning_results <- tune_catch_prob_xgb(train, mod = throw_or_arr, overnightmode = T)
+  catch_prob_tuning_results <- tune_catch_prob_xgb(train, mod = throw_or_arr, overnightmode = overnightmode, overnightcores = overnightcores)
   catch_prob_model <- fit_catch_prob_xgb(
     workflow = catch_prob_tuning_results$workflow,
     pars = catch_prob_tuning_results$parameters,
@@ -42,13 +44,15 @@ run_catch_prob_tuning_pipeline <- function(throw_or_arr = "") {
 }
 
 #' run_catch_prob_tuning_pipeline runs the catch prob tuning pipeline
+#' @param overnightmode boolean whether or not to run in overnightmode
+#' @param overnightcores integer how many cores to run on
 #' @return NULL (invisible)
 #' @export
 #'
-run_catch_prob_tuning_pipelines <- function() {
-  run_catch_prob_tuning_pipeline('a')
-  run_catch_prob_tuning_pipeline('t')
-  make_catch_prob_table(1000, 50, TRUE)
+run_catch_prob_tuning_pipelines <- function(overnightmode = TRUE, overnightcores = 4) {
+  run_catch_prob_tuning_pipeline('a', overnightmode, overnightcores)
+  run_catch_prob_tuning_pipeline('t', overnightmode, overnightcores)
+  make_catch_prob_table(1000, 50)
 
   return(invisible(NULL))
 }

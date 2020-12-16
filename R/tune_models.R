@@ -3,6 +3,7 @@
 #' @param data a full data frame to tune the model on
 #' @param mod 'a' for arrival, 't' for throw
 #' @param overnightmode TRUE auto sets 4 cores
+#' @param overnightcores an integer for the number of cores to run on
 #' @return a list with the data, the data_split, the workflow, the best set of tuning parameters, and the tuning results
 #' @importFrom magrittr %>%
 #' @importFrom tune finalize_workflow last_fit
@@ -20,11 +21,11 @@
 #' @import dials
 #' @export
 #'
-tune_catch_prob_xgb <- function(data, mod = '', overnightmode = FALSE) {
+tune_catch_prob_xgb <- function(data, mod = '', overnightmode = FALSE, overnightcores = NULL) {
   where <- NULL
 
   if (overnightmode) {
-    ncores <- 4
+    ncores <- overnightcores
   } else {
     ncores <- showPrompt(
       title = "Cores", message = "How many cores do you want to use? Use parallel::detectCores() to see how many cores are available.", default = 4
