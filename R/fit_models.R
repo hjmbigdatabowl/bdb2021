@@ -26,6 +26,34 @@ fit_catch_prob_xgb <- function(workflow, pars, data_split, data) {
               final_res = final_res))
 }
 
+#' fit_target_prob_rf fit the rf target prob model
+#'
+#' @param workflow a workflow object
+#' @param pars a tibble of the parameters (generally output from tune::select_best())
+#' @param data_split a data_split object
+#' @param data a full data frame to fit the model on
+#' @return a list with the final random forest model and the modeling results (auc, acc, etc.)
+#' @importFrom magrittr %>%
+#' @importFrom tune finalize_workflow last_fit
+#' @importFrom parsnip fit
+#' @export
+#'
+fit_target_prob_rf <- function(workflow, pars, data_split, data) {
+  
+  final_rf <- tune::finalize_workflow(
+    workflow,
+    pars
+  ) %>%
+    parsnip::fit(data)
+  
+  final_res <- tune::last_fit(final_rf, data_split)
+  
+  save(final_rf, final_res, file = "models/target_prob_rf.Rdata")
+  
+  return(list(final_rf = final_rf,
+              final_res = final_res))
+}
+
 #' fit_logit_platt_scaler fit the Platt scaler to calibrate the xgboost predictions
 #'
 #' @param model an xgboost model fit with parsnip
@@ -71,4 +99,23 @@ stepwise_catch_prob_predict <- function(data, xgb_model, logit_model) {
   return(preds$calibratedprob)
 }
 
+#' stepwise_target_prob_predict Make calibrated predictions from rf + Platt scaling
+#'
+#' @param data a data frame
+#' @param rf_model the rf (parsnip) model
+#' @param logit_model the logistic regression (parsnip) model
+#' @return a vector of predicted probabilities
+#' @importFrom magrittr %>%
+#' @importFrom parsnip predict.model_fit
+#' @importFrom dplyr mutate
+#' @importFrom rlang .data
+#' @export
+#'
+stepwise_catch_prob_predict <- function(data, rf_model, logit_model) {
+  preds <- data %>%
+    mutate(predprob = predict.model_fit(rf_model, .data, type = 'prob')$.pred_Complete,
+           calibratedprob = predict.model_fit(logit_model, .data, type = 'prob')$.pred_Complete)
+  
+  return(preds$calibratedprob)
+}
 
