@@ -67,7 +67,7 @@ divvy_credit <- function(data, xgb_model, logit_model) {
                           playId = data$playId,
                           original_preds = original_preds)
   for (i in 1:11) {
-    new_preds[[i+3]] <- (recalc_prob(i, data, xgb_model, logit_model))
+    new_preds[[i + 3]] <- (recalc_prob(i, data, xgb_model, logit_model))
   }
 
   diffs <- new_preds %>%
