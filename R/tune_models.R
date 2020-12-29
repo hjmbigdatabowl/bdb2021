@@ -86,3 +86,85 @@ tune_catch_prob_xgb <- function(data) {
               parameters = best_auc,
               tune_results = xgb_res))
 }
+
+#' tune_target_prob_rf tune the rf target prob model
+#'
+#' @param data a full data frame to tune the model on
+#' @return a list with the data, the data_split, the workflow, the best set of tuning parameters, and the tuning results
+#' @importFrom magrittr %>%
+#' @importFrom tune finalize_workflow last_fit
+#' @importFrom parsnip fit set_mode set_engine boost_tree
+#' @importFrom dplyr select mutate across
+#' @importFrom rlang .data
+#' @importFrom rsample initial_split training testing vfold_cv
+#' @importFrom tune tune tune_bayes control_bayes select_best
+#' @importFrom recipes recipe step_other step_dummy all_outcomes all_nominal
+#' @importFrom workflows workflow add_recipe add_model
+#' @importFrom yardstick roc_auc  f_meas kap accuracy bal_accuracy metric_set
+#' @importFrom doParallel registerDoParallel
+#' @import dials
+#' @export
+#'
+tune_target_prob_rf <- function(data) {
+  data <- data %>%
+    select(.data$x_adj, .data$y_adj, .data$def_position,
+           .data$position, .data$def_distance, .data$dist_side_line, .data$o_adj_cos, .data$regressed_targets,
+           .data$target_flg) %>%
+    mutate(across(where(is.character), as.factor))
+  
+  data_split <- initial_split(data, strata = target_flg)
+  data_train <- training(data_split)
+  data_test <- testing(data_split)
+  
+  rf_spec <- rand_forest(
+    mtry = tune(),
+    min_n = tune(),
+    trees = tune()
+  ) %>%
+    set_mode("classification") %>%
+    set_engine("ranger")
+  
+  rf_params <- parameters(
+    trees(),
+    min_n(),
+    finalize(mtry(), data_train)  
+  )
+  
+  prep_rec <-
+    recipe(formula = target_flg ~., data = data_train) %>%
+    step_dummy(all_nominal(),-all_outcomes(), threshold = 0.01) %>%
+    step_knnimpute(all_numeric(),-all_outcomes())
+  
+  rf_wf <- workflow() %>%
+    add_recipe(prep_rec) %>%
+    add_model(rf_spec)
+  
+  data_folds <- vfold_cv(data_train, strata = target_flg)
+  
+  registerDoParallel(cores = 4)
+  rf_res <- tune_bayes(
+    rf_wf,
+    resamples = data_folds,
+    param_info = xgb_params,
+    iter = 500,
+    metrics = metric_set(roc_auc,
+                         bal_accuracy,
+                         f_meas,
+                         accuracy,
+                         kap),
+    initial = 20,
+    control = control_bayes(no_improve = 200,
+                            uncertain = 50,
+                            save_pred = F,
+                            time_limit = 600,
+                            verbose = T)
+  )
+  
+  best_auc <- select_best(rf_res, "roc_auc")
+  save(rf_spec, rf_res, rf_wf, best_auc, data_folds, file = 'models/target_prob_rf_xval.Rdata')
+  return(list(data = data,
+              data_split = data_split,
+              workflow = rf_wf,
+              parameters = best_auc,
+              tune_results = rf_res))
+}
