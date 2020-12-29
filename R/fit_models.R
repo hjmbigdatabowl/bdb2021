@@ -65,8 +65,8 @@ fit_logit_platt_scaler <- function(model, data) {
 #'
 stepwise_catch_prob_predict <- function(data, xgb_model, logit_model) {
   preds <- data %>%
-    mutate(predprob = predict(xgb_model, .data, type = 'prob')$.pred_Complete,
-           calibratedprob = predict(logit_model, .data, type = 'prob')$.pred_Complete)
+    mutate(predprob = predict.model_fit(xgb_model, .data, type = 'prob')$.pred_Complete,
+           calibratedprob = predict.model_fit(logit_model, .data, type = 'prob')$.pred_Complete)
 
   return(preds$calibratedprob)
 }
