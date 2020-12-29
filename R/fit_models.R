@@ -33,7 +33,7 @@ fit_catch_prob_xgb <- function(workflow, pars, data_split, data) {
 #' @return a logistic regression (parsnip) model
 #' @importFrom magrittr %>%
 #' @importFrom tune finalize_workflow last_fit
-#' @importFrom parsnip fit logistic_reg set_engine
+#' @importFrom parsnip fit logistic_reg set_engine predict.model_fit
 #' @importFrom dplyr mutate
 #' @importFrom rlang .data
 #' @export
@@ -41,7 +41,7 @@ fit_catch_prob_xgb <- function(workflow, pars, data_split, data) {
 fit_logit_platt_scaler <- function(model, data) {
 
   preds <- data %>%
-    mutate(predprob = predict(model, .data, type = 'prob')$.pred_Complete,
+    mutate(predprob = predict.model_fit(model, .data, type = 'prob')$.pred_Complete,
            target = as.factor(.data$outcome))
 
   logit_model <- logistic_reg() %>%

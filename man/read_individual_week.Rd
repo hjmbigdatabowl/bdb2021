@@ -6,6 +6,9 @@
 \usage{
 read_individual_week(week)
 }
+\arguments{
+\item{week}{the week to read}
+}
 \value{
 a data.frame with the PBP data for the specified week
 }

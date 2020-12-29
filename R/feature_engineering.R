@@ -14,21 +14,26 @@
 #'
 do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
   # get meta
-  nonweek <- read_non_week_files(.data)
+  nonweek <- read_non_week_files()
 
   # get pbp data
   weeks <- weeks_to_use %>%
     map(read_individual_week) %>%
-    bind_rows(.data)
+    bind_rows()
+
+  THROW_START_EVENTS <- get_constants('throw_start_events')
+  THROW_END_EVENTS <- get_constants('throw_end_events')
+  OFFENSE_POSITIONS <- get_constants('offense_positions')
+  DEFENSE_POSITIONS <- get_constants('defense_positions')
 
   ## get targeted receiver
-  targeted_receiver <- read_targets(.data) %>%
+  targeted_receiver <- read_targets() %>%
     mutate(istarget = TRUE)
 
   # track location of football
   football_data <- weeks %>%
     filter(.data$team == 'football') %>%
-    select(.data$gameId, .data$playId, .data$frameId, .data$x, .data$y) %>%
+    select('gameId', 'playId', 'frameId', 'x', 'y') %>%
     rename(footballX = .data$x,
            footballY = .data$y)
 
@@ -36,11 +41,11 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
   football_dist_traveled <- weeks %>%
     filter(.data$team == 'football',
            .data$event %in% c(THROW_START_EVENTS, THROW_END_EVENTS)) %>%
-    select(.data$gameId, .data$playId, .data$frameId, .data$x, .data$y) %>%
+    select('gameId', 'playId', 'frameId', 'x', 'y') %>%
     group_by(.data$gameId, .data$playId) %>%
     summarize(throwdist = sqrt((diff(.data$x) ** 2) + (diff(.data$y) ** 2)), .groups = 'keep') %>%
     filter(n() == 1) %>%
-    ungroup(.data)
+    ungroup()
 
 
   throw_midpoint_frame_id <- weeks %>%
@@ -98,7 +103,7 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
     mutate(outcome = case_when(.data$passResult %in% c('I', 'IN') ~ 'Incomplete',
                                .data$passResult == 'C' | .data$isDefensivePI ~ 'Complete')) %>%
     select(.data$gameId, .data$playId, .data$outcome) %>%
-    distinct(.data)
+    distinct()
 
   # get player locations at the time of throw
   player_at_throw <- target_at_throw %>%
@@ -107,7 +112,7 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
                               .data$position %in% DEFENSE_POSITIONS ~ 'def')) %>%
     select(.data$gameId, .data$playId, .data$event,
            .data$nflId, .data$team, .data$position,
-           .data$frameId, .data$x:.data$dir, .data$.data$playDirection,
+           .data$frameId, .data$x:.data$dir, .data$playDirection,
            .data$route, .data$istarget) %>%
     inner_join(play_outcomes, by = c('gameId', 'playId'))
 
@@ -131,7 +136,7 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
     select(.data$nflId, .data$position) %>%
     rename(nflId_def = .data$nflId,
            def_pos = .data$position) %>%
-    distinct(.data) %>%
+    distinct() %>%
     mutate(def_pos = case_when(.data$def_pos %in% c('SS', 'FS', 'S') ~ 'Safety',
                                .data$def_pos %in% c('DB', 'CB') ~ 'Corner',
                                .data$def_pos %in% c('ILB', 'MLB', 'LB', 'OLB') ~ 'Linebacker',
@@ -141,7 +146,7 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
            grouped_def_pos = case_when(.data$def_pos %in% c('Safety', 'Corner') ~ 'DB',
                                        .data$def_pos == 'Offense' ~ 'Offense',
                                        TRUE ~ 'Other')) %>%
-    drop_na(.data)
+    drop_na()
 
   ## absolute yardline is the distance you are from the target endzone
   play_data <- nonweek$plays %>%
@@ -155,15 +160,15 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
     mutate(team_nick = ifelse(.data$team_nick == 'Football Team', 'Washington', .data$team_nick))
 
   weather_raw <- map(weeks_to_use, get_weather, 2018) %>%
-    bind_rows(.data)
+    bind_rows()
 
   weather <- nonweek$games %>%
-    left_join(.data$teamabbrs %>% rename(Home = .data$team_nick), by = c('homeTeamAbbr' = 'team_abbr')) %>%
-    left_join(.data$teamabbrs %>% rename(Away = .data$team_nick), by = c('visitorTeamAbbr' = 'team_abbr')) %>%
+    left_join(teamabbrs %>% rename(Home = .data$team_nick), by = c('homeTeamAbbr' = 'team_abbr')) %>%
+    left_join(teamabbrs %>% rename(Away = .data$team_nick), by = c('visitorTeamAbbr' = 'team_abbr')) %>%
     left_join(weather_raw, by = c('Home', 'Away', 'week')) %>%
     select(.data$gameId, .data$Forecast) %>%
-    mutate(Forecast = .data$str_replace(.data$Forecast, "\\s", "|"),
-           Forecast = .data$case_when(.data$Forecast == 'DOME' ~ '70f|Dome',
+    mutate(Forecast = str_replace(.data$Forecast, "\\s", "|"),
+           Forecast = case_when(.data$Forecast == 'DOME' ~ '70f|Dome',
                                 TRUE ~ .data$Forecast)) %>%
     separate(.data$Forecast, into = c('temperature', 'conditions'), sep = "\\|") %>%
     mutate(temperature = str_remove_all(.data$temperature, "[^0-9]") %>% as.numeric(.data),
@@ -241,9 +246,9 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
 #'
 get_weather <- function(week, year) {
   page <- (read_html(glue("http://www.nflweather.com/en/week/{year}/week-{week}/")) %>%
-             html_table(.data))[[1]] %>%
+             html_table())[[1]] %>%
     select(.data$Home, .data$Away, .data$Forecast) %>%
-    mutate(week = .data$week)
+    mutate(week = week)
 
   return(page)
 }

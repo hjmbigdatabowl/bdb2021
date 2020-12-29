@@ -35,6 +35,7 @@ read_non_week_files <- function() {
 #'
 #' @importFrom purrr keep map
 #' @importFrom dplyr bind_rows
+#' @param week the week to read
 #' @return a data.frame with the PBP data for the specified week
 #' @export
 read_individual_week <- function(week) {
