@@ -1,0 +1,28 @@
+Package: bdb2021
+Title: Our Big Data Bowl 2021 Submission
+Version: 1.0.0
+Authors@R: 
+    person(given = "Matt",
+           family = "Kaye",
+           role = c("aut", "cre"),
+           email = "mrkaye97@gmail.com")
+Description: This package houses all of the code behind our 2021 Big Data Bowl submission. It relies on the data from the Kaggle competition, which can be found on the Kaggle site.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
+Imports: 
+    dplyr (>= 1.0.2),
+    purrr (>= 0.3.4),
+    tidyr (>= 1.1.2),
+    stringr (>= 1.4.0),
+    rvest (>= 0.3.6),
+    xml2 (>= 1.3.2),
+    parsnip (>= 0.1.4),
+    yardstick (>= 0.0.7),
+    tune (>= 0.1.1),
+    glue (>= 1.4.2),
+    magrittr (>= 2.0.1),
+    rlang (>= 0.4.8),
+    nflfastR (>= 3.2.0)
