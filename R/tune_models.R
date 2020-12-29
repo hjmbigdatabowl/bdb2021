@@ -1,6 +1,7 @@
 #' tune_catch_prob_xgb tune the xgboost catch prob model
 #'
 #' @param data a full data frame to tune the model on
+#' @param ncores the number of cores to use when tuning, defaults to 4
 #' @return a list with the data, the data_split, the workflow, the best set of tuning parameters, and the tuning results
 #' @importFrom magrittr %>%
 #' @importFrom tune finalize_workflow last_fit
@@ -16,7 +17,7 @@
 #' @import dials
 #' @export
 #'
-tune_catch_prob_xgb <- function(data) {
+tune_catch_prob_xgb <- function(data, ncores = 4) {
   data <- data %>%
     select(.data$dist_to_def_1:.data$veloToIntercept_def_11, .data$max_throw_velo, .data$throwdist,
            .data$numberOfPassRushers, .data$targetXThrow, .data$targetYThrow, .data$footballXArr, .data$footballYArr,
@@ -59,7 +60,7 @@ tune_catch_prob_xgb <- function(data) {
 
   data_folds <- vfold_cv(data_train, strata = outcome)
 
-  registerDoParallel(cores = 4)
+  registerDoParallel(cores = ncores)
   xgb_res <- tune_bayes(
     xgb_wf,
     resamples = data_folds,
@@ -90,6 +91,7 @@ tune_catch_prob_xgb <- function(data) {
 #' tune_target_prob_rf tune the rf target prob model
 #'
 #' @param data a full data frame to tune the model on
+#' @param ncores the number of cores to use when tuning, defaults to 4
 #' @return a list with the data, the data_split, the workflow, the best set of tuning parameters, and the tuning results
 #' @importFrom magrittr %>%
 #' @importFrom tune finalize_workflow last_fit
@@ -105,7 +107,7 @@ tune_catch_prob_xgb <- function(data) {
 #' @import dials
 #' @export
 #'
-tune_target_prob_rf <- function(data) {
+tune_target_prob_rf <- function(data, ncores = 4) {
   data <- data %>%
     select(.data$x_adj, .data$y_adj, .data$def_position,
            .data$position, .data$def_distance, .data$dist_side_line, .data$o_adj_cos, .data$regressed_targets,
@@ -141,7 +143,7 @@ tune_target_prob_rf <- function(data) {
   
   data_folds <- vfold_cv(data_train, strata = target_flg)
   
-  registerDoParallel(cores = 4)
+  registerDoParallel(cores = ncores)
   rf_res <- tune_bayes(
     rf_wf,
     resamples = data_folds,

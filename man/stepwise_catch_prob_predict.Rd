@@ -4,18 +4,26 @@
 \alias{stepwise_catch_prob_predict}
 \title{stepwise_catch_prob_predict Make calibrated predictions from xgboost + Platt scaling}
 \usage{
-stepwise_catch_prob_predict(data, xgb_model, logit_model)
+stepwise_catch_prob_predict(data, rf_model, logit_model)
+
+stepwise_catch_prob_predict(data, rf_model, logit_model)
 }
 \arguments{
 \item{data}{a data frame}
 
-\item{xgb_model}{the xgboost (parsnip) model}
+\item{rf_model}{the rf (parsnip) model}
 
 \item{logit_model}{the logistic regression (parsnip) model}
+
+\item{xgb_model}{the xgboost (parsnip) model}
 }
 \value{
+a vector of predicted probabilities
+
 a vector of predicted probabilities
 }
 \description{
 stepwise_catch_prob_predict Make calibrated predictions from xgboost + Platt scaling
+
+stepwise_target_prob_predict Make calibrated predictions from rf + Platt scaling
 }
