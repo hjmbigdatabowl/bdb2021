@@ -230,7 +230,7 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
 #'
 #' @param week numeric, the week to get
 #' @param year numeric, the year to get
-#' @return a data frame of features
+#' @return a data frame of forecasts
 #' @importFrom magrittr %>%
 #' @importFrom rvest html_table
 #' @importFrom xml2 read_html

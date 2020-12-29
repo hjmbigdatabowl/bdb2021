@@ -12,7 +12,7 @@ get_weather(week, year)
 \item{year}{numeric, the year to get}
 }
 \value{
-a data frame of features
+a data frame of forecasts
 }
 \description{
 get_weather return the weather forecast in a given week
