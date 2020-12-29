@@ -58,7 +58,7 @@ fit_logit_platt_scaler <- function(model, data) {
 #' @param logit_model the logistic regression (parsnip) model
 #' @return a vector of predicted probabilities
 #' @importFrom magrittr %>%
-#' @importFrom parsnip predict
+#' @importFrom parsnip predict.model_fit
 #' @importFrom dplyr mutate
 #' @importFrom rlang .data
 #' @export
