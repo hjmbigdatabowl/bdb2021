@@ -136,12 +136,12 @@ tune_target_prob_rf <- function(data) {
     askYesNo("Warning: Number of cores provided is equal to the number of cores detected on this machine. This may impact performance for other programs on your computer. Do you wish to proceed?")
   }
   data <- data %>%
-    select(.data$x_adj, .data$y_adj, .data$def_position,
-           .data$position, .data$def_distance, .data$dist_side_line, .data$o_adj_cos, .data$regressed_targets,
-           .data$target_flg) %>%
+    select(.data$xAdj, .data$yAdj, .data$defPosition,
+           .data$position, .data$defDistance, .data$distSideLine, .data$oAdjCos, .data$regressedTargets,
+           .data$targetFlg) %>%
     mutate(across(where(is.character), as.factor))
 
-  data_split <- initial_split(data, strata = target_flg)
+  data_split <- initial_split(data, strata = targetFlg)
   data_train <- training(data_split)
   data_test <- testing(data_split)
 
@@ -160,7 +160,7 @@ tune_target_prob_rf <- function(data) {
   )
 
   prep_rec <-
-    recipe(formula = target_flg ~., data = data_train) %>%
+    recipe(formula = targetFlg ~., data = data_train) %>%
     step_dummy(all_nominal(),-all_outcomes(), threshold = 0.01) %>%
     step_knnimpute(all_numeric(),-all_outcomes())
 
@@ -168,7 +168,7 @@ tune_target_prob_rf <- function(data) {
     add_recipe(prep_rec) %>%
     add_model(rf_spec)
 
-  data_folds <- vfold_cv(data_train, strata = target_flg)
+  data_folds <- vfold_cv(data_train, strata = targetFlg)
 
   registerDoParallel(cores = ncores)
   rf_res <- tune_bayes(
