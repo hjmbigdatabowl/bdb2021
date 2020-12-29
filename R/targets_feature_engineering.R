@@ -155,10 +155,10 @@ do_target_prob_feature_eng <- function(weeks_to_use = 1:17){
       distToFirst = .data$receiverX - .data$firstDownYardline,
       position = ifelse(.data$position == "HB", "RB", .data$position),
       oAdj = atan2(.data$xAdj, .data$yAdj) * 180 / pi,
-      oAdj_diff = abs(.data$oAdj - .data$qbO),
-      oAdj_cos = cos((.data$oAdj - .data$qbO) * pi / 180)
+      oAdjDiff = abs(.data$oAdj - .data$qbO),
+      oAdjCos = cos((.data$oAdj - .data$qbO) * pi / 180)
     ) %>%
-    filter(!is.na(.data$oAdj_cos))
+    filter(!is.na(.data$oAdjCos))
 
   receiver_target_rates <- throw_target_data %>%
     group_by(.data$nflId, .data$displayName, .data$possessionTeam, .data$position) %>%
