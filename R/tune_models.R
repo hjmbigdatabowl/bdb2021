@@ -1,7 +1,6 @@
 #' tune_catch_prob_xgb tune the xgboost catch prob model
 #'
 #' @param data a full data frame to tune the model on
-#' @param ncores the number of cores to use when tuning, defaults to 4
 #' @return a list with the data, the data_split, the workflow, the best set of tuning parameters, and the tuning results
 #' @importFrom magrittr %>%
 #' @importFrom tune finalize_workflow last_fit
@@ -17,7 +16,22 @@
 #' @import dials
 #' @export
 #'
-tune_catch_prob_xgb <- function(data, ncores = 4) {
+tune_catch_prob_xgb <- function(data) {
+  ncores <- rstudioapi::showPrompt(
+    title = "Cores", message = "How many cores do you want to use? Use parallel::detectCores() to see how many cores are available.", default = 4
+  )
+
+  ncores <- as.integer(ncores)
+
+  if(is.na(ncores)){
+    stop("Error: Improper number of cores provided. Please provide an integer greater than or equal to 1.")
+  } else if(ncores > parallel::detectCores()){
+    stop("Error: Number of cores specified exceeds number of cores available on this machine. Please specify an integer between 1 and the value output by parallel::detectCores().")
+  }
+  else if(ncores == parallel::detectCores()){
+    askYesNo("Warning: Number of cores provided is equal to the number of cores detected on this machine. This may impact performance for other programs on your computer. Do you wish to proceed?")
+  }
+
   data <- data %>%
     select(.data$dist_to_def_1:.data$veloToIntercept_def_11, .data$max_throw_velo, .data$throwdist,
            .data$numberOfPassRushers, .data$targetXThrow, .data$targetYThrow, .data$footballXArr, .data$footballYArr,
@@ -91,7 +105,6 @@ tune_catch_prob_xgb <- function(data, ncores = 4) {
 #' tune_target_prob_rf tune the rf target prob model
 #'
 #' @param data a full data frame to tune the model on
-#' @param ncores the number of cores to use when tuning, defaults to 4
 #' @return a list with the data, the data_split, the workflow, the best set of tuning parameters, and the tuning results
 #' @importFrom magrittr %>%
 #' @importFrom tune finalize_workflow last_fit
@@ -107,17 +120,31 @@ tune_catch_prob_xgb <- function(data, ncores = 4) {
 #' @import dials
 #' @export
 #'
-tune_target_prob_rf <- function(data, ncores = 4) {
+tune_target_prob_rf <- function(data) {
+  ncores <- rstudioapi::showPrompt(
+    title = "Cores", message = "How many cores do you want to use? Use parallel::detectCores() to see how many cores are available.", default = 4
+  )
+
+  ncores <- as.integer(ncores)
+
+  if(is.na(ncores)){
+    stop("Error: Improper number of cores provided. Please provide an integer greater than or equal to 1.")
+  } else if(ncores > parallel::detectCores()){
+    stop("Error: Number of cores specified exceeds number of cores available on this machine. Please specify an integer between 1 and the value output by parallel::detectCores().")
+  }
+  else if(ncores == parallel::detectCores()){
+    askYesNo("Warning: Number of cores provided is equal to the number of cores detected on this machine. This may impact performance for other programs on your computer. Do you wish to proceed?")
+  }
   data <- data %>%
     select(.data$x_adj, .data$y_adj, .data$def_position,
            .data$position, .data$def_distance, .data$dist_side_line, .data$o_adj_cos, .data$regressed_targets,
            .data$target_flg) %>%
     mutate(across(where(is.character), as.factor))
-  
+
   data_split <- initial_split(data, strata = target_flg)
   data_train <- training(data_split)
   data_test <- testing(data_split)
-  
+
   rf_spec <- rand_forest(
     mtry = tune(),
     min_n = tune(),
@@ -125,24 +152,24 @@ tune_target_prob_rf <- function(data, ncores = 4) {
   ) %>%
     set_mode("classification") %>%
     set_engine("ranger")
-  
+
   rf_params <- parameters(
     trees(),
     min_n(),
-    finalize(mtry(), data_train)  
+    finalize(mtry(), data_train)
   )
-  
+
   prep_rec <-
     recipe(formula = target_flg ~., data = data_train) %>%
     step_dummy(all_nominal(),-all_outcomes(), threshold = 0.01) %>%
     step_knnimpute(all_numeric(),-all_outcomes())
-  
+
   rf_wf <- workflow() %>%
     add_recipe(prep_rec) %>%
     add_model(rf_spec)
-  
+
   data_folds <- vfold_cv(data_train, strata = target_flg)
-  
+
   registerDoParallel(cores = ncores)
   rf_res <- tune_bayes(
     rf_wf,
@@ -161,7 +188,7 @@ tune_target_prob_rf <- function(data, ncores = 4) {
                             time_limit = 600,
                             verbose = T)
   )
-  
+
   best_auc <- select_best(rf_res, "roc_auc")
   save(rf_spec, rf_res, rf_wf, best_auc, data_folds, file = 'models/target_prob_rf_xval.Rdata')
   return(list(data = data,
