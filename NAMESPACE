@@ -3,6 +3,7 @@
 export(aggregate_week_files)
 export(divvy_credit)
 export(do_catch_prob_feat_eng)
+export(do_target_prob_feature_eng)
 export(fit_catch_prob_xgb)
 export(fit_logit_platt_scaler)
 export(fit_target_prob_rf)
