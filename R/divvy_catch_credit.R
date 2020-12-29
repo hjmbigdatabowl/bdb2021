@@ -4,7 +4,6 @@
 #' @param data the data frame from which the probabilities are being predicted
 #' @param xgb_model the xgboost model
 #' @param logit_model the logit model used for Platt scaling
-#' @param
 #' @return a numeric vector of predicted probabilities
 #' @importFrom magrittr %>%
 #' @importFrom dplyr mutate
