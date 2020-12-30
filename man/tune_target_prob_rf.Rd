@@ -4,12 +4,10 @@
 \alias{tune_target_prob_rf}
 \title{tune_target_prob_rf tune the rf target prob model}
 \usage{
-tune_target_prob_rf(data, ncores = 4)
+tune_target_prob_rf(data)
 }
 \arguments{
 \item{data}{a full data frame to tune the model on}
-
-\item{ncores}{the number of cores to use when tuning, defaults to 4}
 }
 \value{
 a list with the data, the data_split, the workflow, the best set of tuning parameters, and the tuning results

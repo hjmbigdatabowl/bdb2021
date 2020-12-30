@@ -32,38 +32,21 @@ do_target_prob_feature_eng <- function(weeks_to_use = 1:17){
   plays <- weeks_to_use %>%
     map(read_individual_week) %>%
     bind_rows() %>%
-    mutate(gameId = as.character(.data$gameId),
-           playId = as.character(.data$playId),
-           ToLeft = .data$playDirection == "left",
-           IsOnOffense = .data$position %in% OFFENSE_POSITIONS,
-           xStd = ifelse(.data$ToLeft, 120 - .data$x, .data$x) - 10,
-           yStd = ifelse(.data$ToLeft, 160/3 - .data$y, .data$y),
-           dirStd1 = ifelse(.data$ToLeft & .data$dir < 90, .data$dir + 360, .data$dir),
-           dirStd1 = ifelse(!.data$ToLeft & .data$dir > 270, .data$dir - 360, .data$dir),
-           dirStd2 = ifelse(.data$ToLeft, .data$dirStd1 - 180, .data$dirStd1),
-           oStd1 = ifelse(.data$ToLeft & .data$o < 90, .data$o + 360, .data$o),
-           oStd1 = ifelse(!.data$ToLeft & .data$o > 270, .data$o - 360, .data$o),
-           oStd2 = ifelse(.data$ToLeft, .data$oStd1 - 180, .data$oStd1),
-           x = .data$xStd,
-           y = .data$yStd,
-           dir = .data$dirStd2,
-           o = .data$oStd2) %>%
-    select(-c(.data$xStd, .data$yStd, .data$dirStd1, .data$dirStd2, .data$oStd1, .data$oStd2))
+    standardize_position_coordinates()
 
   # nflfastR play-by-play data
   pbp <- readRDS(url(paste0("https://github.com/guga31bb/nflfastR-data/blob/master/data/play_by_play_2018.rds?raw=true")))
 
   pbp <- pbp %>%
     filter(.data$pass_attempt == 1) %>%
-    mutate(game_id = as.character(.data$old_game_id),
-           play_id = as.character(.data$play_id)) %>%
-    select(gameId = .data$game_id,
-           playId = .data$play_id,
-           receiverId = .data$receiver_id,
-           receiverName = .data$receiver,
+    mutate(gameId = as.character(.data$old_game_id),
+           playId = as.character(.data$play_id)) %>%
+    select(gameId,
+           playId,
+           pbpReceiverName = .data$receiver,
            halfSecondsRemaining = .data$half_seconds_remaining,
            scoreDifferential = .data$score_differential) %>%
-    filter(!is.na(.data$receiverName))
+    filter(!is.na(.data$pbpReceiverName))
 
   football_start_pos <- plays %>%
     filter(.data$displayName == "Football") %>%
@@ -73,7 +56,7 @@ do_target_prob_feature_eng <- function(weeks_to_use = 1:17){
       yInit = first(.data$y))
 
   # position data of QB when throw is made
-  qbs <- plays %>%
+  qb_throw_position <- plays %>%
     filter(.data$position == "QB"
            & .data$event %in% THROW_START_EVENTS) %>%
     rename(qbName = .data$displayName,
@@ -85,8 +68,24 @@ do_target_prob_feature_eng <- function(weeks_to_use = 1:17){
            qbO = .data$o) %>%
     select(.data$gameId, .data$playId, contains("qb"))
 
+  # receiver position at throw
+  receiver_throw_position <- plays %>%
+    filter(.data$position %in% OFFENSE_POSITIONS
+           & .data$event %in% THROW_START_EVENTS
+           & .data$position != "QB") %>%
+    rename(receiverName = .data$displayName,
+           receiverId = .data$nflId,
+           receiverX = .data$x,
+           receiverY = .data$y,
+           receiverSpeed = .data$s,
+           receiverDir = .data$dir,
+           receiverO = .data$o,
+           receiverRoute = .data$route,
+           receiverPosition = .data$position) %>%
+    select(.data$gameId, .data$playId, .data$ToLeft, contains("receiver"))
+
   # targeted receiver on each play
-  receivers <- read_targets() %>%
+  play_targeted_receiver <- read_targets() %>%
     mutate(gameId = as.character(.data$gameId),
            playId = as.character(.data$playId),
            targetNflId = as.character(.data$targetNflId))
@@ -107,36 +106,29 @@ do_target_prob_feature_eng <- function(weeks_to_use = 1:17){
 
   Y_MAX <- 160 / 3
 
-  throw_target_data <- plays %>%
-    filter(.data$position %in% OFFENSE_POSITIONS
-           & .data$event %in% THROW_START_EVENTS
-           & .data$position != "QB") %>%
-    rename(receiverX = .data$x,
-           receiverY = .data$y) %>%
+  throw_target_data <- receiver_throw_position %>%
     inner_join(football_start_pos, by=c("gameId", "playId")) %>%
-    mutate(
-      xAdj = .data$receiverX - .data$xInit,
-      yAdj = .data$receiverY - .data$yInit,
-      distSideLine = pmin(.data$receiverY, Y_MAX - .data$receiverY),
-    ) %>%
-    left_join(qbs, by=c("gameId", "playId")) %>%
-    inner_join(receivers, by=c("gameId", "playId")) %>%
+    mutate(xAdj = .data$receiverX - .data$xInit,
+           yAdj = .data$receiverY - .data$yInit,
+           distSideLine = pmin(.data$receiverY, Y_MAX - .data$receiverY)) %>%
+    left_join(qb_throw_position, by=c("gameId", "playId")) %>%
+    inner_join(play_targeted_receiver, by=c("gameId", "playId")) %>%
     inner_join(pbp, by=c("gameId", "playId")) %>%
     left_join(defenders, by=c("gameId", "playId")) %>%
-    group_by(.data$gameId, .data$playId, .data$nflId) %>%
-    slice(which.min(sqrt((.data$receiverX - .data$defX)**2 + (.data$receiverY - .data$defY)**2))) %>%
-    ungroup() %>%
-    mutate(displayName = gsub("(?<=^.).*?\\s", ".", .data$displayName, perl = T),
-           targetFlag = as.numeric(.data$displayName == .data$receiverName),
+    mutate(receiverName = gsub("(?<=^.).*?\\s", ".", .data$receiverName, perl = T),
+           targetFlag = as.numeric(.data$receiverName == .data$pbpReceiverName),
            defDistance = sqrt((.data$receiverX - .data$defX)**2 + (.data$receiverY - .data$defY)**2)) %>%
+    group_by(.data$gameId, .data$playId, .data$receiverId) %>%
+    slice(which.min(defDistance)) %>%
+    ungroup() %>%
     group_by(.data$gameId, .data$playId) %>%
     mutate(targets = sum(.data$targetFlag)) %>%
     filter(.data$targets == 1) %>%
     ungroup() %>%
-    select(c("receiverX", "receiverY", "s", "a", "dis", "o", "dir", "route", "position", "xAdj", "yAdj", "defX", "defY", "defDistance",
-             "defPosition", "distSideLine", "halfSecondsRemaining", "scoreDifferential", "nflId", "displayName",
+    select(c("receiverX", "receiverY", "receiverSpeed", "receiverDir", "receiverO", "receiverDir", "receiverRoute", "receiverPosition", "xAdj", "yAdj", "defX", "defY", "defDistance",
+             "defPosition", "distSideLine", "halfSecondsRemaining", "scoreDifferential", "receiverId", "receiverName",
              "qbName", "qbId", "qbX", "qbY", "qbSpeed", "qbDir", "qbO", "targetFlag", "playId", "gameId", "ToLeft")) %>%
-    mutate(nfId = as.factor(.data$nflId),
+    mutate(receiverId = as.factor(.data$receiverId),
            qbId = as.factor(.data$qbId))%>%
     left_join(
       play_metadata %>%
@@ -153,7 +145,7 @@ do_target_prob_feature_eng <- function(weeks_to_use = 1:17){
                                  120 - .data$absoluteYardlineNumber - .data$yardsToGo - 10,
                                  .data$absoluteYardlineNumber + .data$yardsToGo - 10),
       distToFirst = .data$receiverX - .data$firstDownYardline,
-      position = ifelse(.data$position == "HB", "RB", .data$position),
+      position = ifelse(.data$receiverPosition == "HB", "RB", .data$receiverPosition),
       oAdj = atan2(.data$xAdj, .data$yAdj) * 180 / pi,
       oAdjDiff = abs(.data$oAdj - .data$qbO),
       oAdjCos = cos((.data$oAdj - .data$qbO) * pi / 180)
@@ -161,19 +153,19 @@ do_target_prob_feature_eng <- function(weeks_to_use = 1:17){
     filter(!is.na(.data$oAdjCos))
 
   receiver_target_rates <- throw_target_data %>%
-    group_by(.data$nflId, .data$displayName, .data$possessionTeam, .data$position) %>%
+    group_by(.data$receiverId, .data$receiverName, .data$possessionTeam, .data$receiverPosition) %>%
     summarize(
       plays = n(),
-      target_frequency = mean(targetFlag),
-      regressed_targets = sum(targetFlag) / sqrt(plays),
+      targetFrequency = mean(targetFlag),
+      regressedTargets = sum(targetFlag) / sqrt(plays),
       .groups="keep"
     ) %>%
     ungroup()
 
   throw_target_data <- throw_target_data %>%
-    left_join(receiver_target_rates, by = c("position", "nflId", "displayName", "possessionTeam"))
+    left_join(receiver_target_rates, by = c("receiverPosition", "receiverId", "receiverName", "possessionTeam"))
 
-  rm(nonweek, play_metadata, game_metadata, plays, pbp, receivers, football_start_pos, receiver_target_rates, defenders, qbs)
+  rm(nonweek, play_metadata, game_metadata, plays, pbp, play_targeted_receiver, receiver_throw_position, football_start_pos, receiver_target_rates, defenders, qb_throw_position)
 
   return(throw_target_data)
 }

@@ -4,12 +4,10 @@
 \alias{tune_catch_prob_xgb}
 \title{tune_catch_prob_xgb tune the xgboost catch prob model}
 \usage{
-tune_catch_prob_xgb(data, ncores = 4)
+tune_catch_prob_xgb(data)
 }
 \arguments{
 \item{data}{a full data frame to tune the model on}
-
-\item{ncores}{the number of cores to use when tuning, defaults to 4}
 }
 \value{
 a list with the data, the data_split, the workflow, the best set of tuning parameters, and the tuning results
