@@ -161,16 +161,18 @@ tune_target_prob_rf <- function(data) {
 
   prep_rec <-
     recipe(formula = targetFlag ~., data = data_train) %>%
-    step_dummy(all_nominal(),-all_outcomes(), threshold = 0.01) %>%
-    step_knnimpute(all_numeric(),-all_outcomes())
+    step_other(all_nominal(), -all_outcomes(), threshold = 0.01) %>%
+    step_dummy(all_nominal(),-all_outcomes()) %>%
+    step_knnimpute(all_numeric(),-all_outcomes()) %>%
+    step_mutate(targetFlag = as.factor(targetFlag))
 
   rf_wf <- workflow() %>%
     add_recipe(prep_rec) %>%
     add_model(rf_spec)
 
   data_folds <- vfold_cv(data_train, strata = targetFlag)
-
   registerDoParallel(cores = ncores)
+
   rf_res <- tune_bayes(
     rf_wf,
     resamples = data_folds,
