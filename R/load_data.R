@@ -5,7 +5,7 @@
 #' @return data.frame with the loaded file
 #' @export
 read_from_data <- function(file) {
-  read_csv(paste0('inst/data/', file))  # suppresses col specs and uses default guess
+  read_csv(paste0('inst/data/', file), col_types = cols())  # suppresses col specs and uses default guess
 }
 
 #' read_non_week_files read all of the non-PBP data
@@ -67,5 +67,5 @@ aggregate_week_files <- function() {
 #' @return a data.frame with the targets data
 #' @export
 read_targets <- function() {
-  read_csv('inst/data/targetedReceiver.csv')
+  read_csv('inst/data/targetedReceiver.csv', col_types = cols())
 }
