@@ -1,6 +1,6 @@
 #' read_from_data load data from csv file
 #'
-#' @importFrom readr read_csv
+#' @importFrom readr read_csv cols
 #' @param file the file to load
 #' @return data.frame with the loaded file
 #' @export
