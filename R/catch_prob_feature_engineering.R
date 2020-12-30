@@ -1,3 +1,161 @@
+#' get_targeted_receiver get a data frame of the targeted receiver on each play
+#'
+#' @return a data frame with the target data
+#' @importFrom magrittr %>%
+#' @importFrom dplyr mutate
+#'
+get_targeted_receiver <- function() {
+  read_targets() %>%
+    mutate(istarget = TRUE)
+}
+
+#' get_football_locations get a data frame of the location of the football on each play
+#'
+#' @return a data frame with the target data
+#' @param pbp a dataframe of play-by-play data
+#' @importFrom magrittr %>%
+#' @importFrom dplyr filter select rename
+#' @importFrom rlang .data
+#'
+get_football_locations <- function(pbp) {
+  pbp %>%
+    filter(.data$team == 'football') %>%
+    select('gameId', 'playId', 'frameId', 'x', 'y') %>%
+    rename(footballX = .data$x,
+           footballY = .data$y)
+}
+
+#' get_throw_dists returns a data frame of throw distances on each play
+#' @return a data frame with the game id, the play id, and the throw distance
+#' @param pbp a dataframe of play-by-play data
+#' @param throw_start_events a character vector of throw start events
+#' @param throw_end_events a character vector of throw end events
+#' @importFrom magrittr %>%
+#' @importFrom dplyr filter select group_by summarize ungroup n
+#' @importFrom rlang .data
+#'
+get_throw_dists <- function(pbp, throw_start_events, throw_end_events) {
+  pbp %>%
+    filter(.data$team == 'football',
+           .data$event %in% c(throw_start_events, throw_end_events)) %>%
+    select('gameId', 'playId', 'frameId', 'x', 'y') %>%
+    group_by(.data$gameId, .data$playId) %>%
+    summarize(throwdist = sqrt((diff(.data$x) ** 2) + (diff(.data$y) ** 2)), .groups = 'keep') %>%
+    filter(n() == 1) %>%
+    ungroup()
+}
+
+#' get_max_throw_velo returns a data frame of maximum throw velos for each play
+#' @return a data frame with the game id, the play id, and the max throw velo
+#' @param pbp a dataframe of play-by-play data
+#' @importFrom magrittr %>%
+#' @importFrom dplyr filter group_by summarize
+#' @importFrom rlang .data
+#'
+get_max_throw_velo <- function(pbp) {
+  pbp %>%
+    filter(.data$team == 'football') %>%
+    group_by(.data$gameId, .data$playId) %>%
+    summarize(max_throw_velo = max(.data$s), .groups = 'drop')
+}
+
+#' get_target_location_at_throw returns a data frame of the locations of the targeted receiver at throw time on each play
+#' @return a data frame with the positions
+#' @param pbp a dataframe of play-by-play data
+#' @importFrom magrittr %>%
+#' @importFrom dplyr filter mutate inner_join left_join
+#' @importFrom rlang .data
+#'
+get_target_location_at_throw <- function(pbp, football_data, targeted_receiver) {
+  OFFENSE_POSITIONS <- get_constants('OFFENSE_POSITIONS')
+  DEFENSE_POSITIONS <- get_constants('DEFENSE_POSITIONS')
+  THROW_START_EVENTS <- get_constants('THROW_START_EVENTS')
+
+  pbp %>%
+    filter(.data$position %in% c(OFFENSE_POSITIONS, DEFENSE_POSITIONS),
+           .data$team %in% c('home', 'away')) %>%
+    inner_join(football_data, by = c('gameId', 'playId', 'frameId')) %>%
+    mutate(offdef = ifelse(.data$position %in% OFFENSE_POSITIONS, 'off', 'def'),
+           dist_to_ball = sqrt((.data$x - .data$footballX)**2 + (.data$y - .data$footballY)**2)) %>%
+    left_join(targeted_receiver, by = c('gameId', 'playId', c('nflId' = 'targetNflId'))) %>%
+    mutate(istarget = ifelse(is.na(.data$istarget), FALSE, TRUE)) %>%
+    filter((.data$position %in% DEFENSE_POSITIONS) | .data$istarget,
+           .data$event %in% THROW_START_EVENTS)
+
+}
+
+#' get_football_location_at_arrival returns a data frame of the location of the football on each play
+#' @return a data frame with the positions of the football at arrival
+#' @param pbp a dataframe of play-by-play data
+#' @importFrom magrittr %>%
+#' @importFrom dplyr filter select rename
+#' @importFrom rlang .data
+#'
+get_football_location_at_arrival <- function(pbp) {
+  THROW_END_EVENTS <- get_constants('THROW_END_EVENTS')
+
+  weeks %>%
+    filter(.data$displayName == 'Football') %>%
+    filter(.data$event %in% THROW_END_EVENTS) %>%
+    select(.data$gameId, .data$playId, .data$x, .data$y) %>%
+    rename(footballXArr = .data$x,
+           footballYArr = .data$y)
+
+}
+
+#' get_pi_and_sack returns a data frame of pass interferences and sacks
+#' @return a data frame with the positions of the football at arrival
+#' @param plays a dataframe of plays
+#' @importFrom magrittr %>%
+#' @importFrom dplyr select
+#' @importFrom rlang .data
+#'
+get_pi_and_sack <- function(plays) {
+  plays %>%
+    select(.data$gameId, .data$playId, .data$passResult, .data$isDefensivePI)
+}
+
+#' get_play_outcomes returns a data frame of play outcomes
+#' @return a data frame with the play outcomes
+#' @param pbp the play by play data
+#' @importFrom magrittr %>%
+#' @importFrom dplyr select filter mutate distinct inner_join
+#' @importFrom rlang .data
+#'
+get_play_outcomes <- function(pbp, pi_or_sack) {
+  THROW_END_EVENTS <- get_constants('THROW_END_EVENTS')
+
+  pbp %>%
+    inner_join(pi_or_sack, by = c('gameId', 'playId')) %>%
+    filter(.data$event %in% THROW_END_EVENTS,
+           .data$passResult %in% c('C', 'I', 'IN')) %>%
+    mutate(outcome = case_when(.data$passResult %in% c('I', 'IN') ~ 'Incomplete',
+                               .data$passResult == 'C' | .data$isDefensivePI ~ 'Complete')) %>%
+    select(.data$gameId, .data$playId, .data$outcome) %>%
+    distinct()
+}
+
+#' get_defense_locs_at_throw returns a data from of the locations of the defense at throw time
+#' @return a data frame with the locations of the defenders at throw time
+#' @param player_locs_at_throw a data frame of player locations at throw time
+#' @param throw_vectors the throw vectors
+#' @importFrom magrittr %>%
+#' @importFrom dplyr select filter mutate select rename_with group_by
+#' @importFrom rlang .data
+#'
+get_defense_locs_at_throw <- function(player_locs_at_throw, throw_vectors) {
+  player_locs_at_throw %>%
+    filter(.data$position %in% DEFENSE_POSITIONS) %>%
+    select(.data$gameId, .data$playId, .data$frameId, .data$nflId, .data$x, .data$y) %>%
+    add_throw_vector_to_positions(.data, throw_vectors) %>%
+    select(.data$gameId, .data$playId, .data$frameId,
+           .data$x, .data$y, .data$nflId, .data$distanceToThrow,
+           .data$angleToThrow, .data$timeToIntercept, .data$veloToIntercept) %>%
+    rename_with(function(x) paste0((x), "_def"), -c(.data$gameId, .data$playId, .data$frameId)) %>%
+    group_by(.data$gameId, .data$playId, .data$frameId) %>%
+    filter(n() <= 11) ## throw out plays with > 11 guys on the field
+}
+
 #' do_catch_prob_feat_eng build a data frame of catch prob features
 #'
 #' @param weeks_to_use Numeric: a numeric vector of weeks to use (default 1:17)
@@ -13,40 +171,26 @@
 #' @export
 #'
 do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
-  # get meta
-  nonweek <- read_non_week_files()
 
-  # get pbp data
-  weeks <- weeks_to_use %>%
-    map(read_individual_week) %>%
-    bind_rows()
+  nonweek <- read_non_week_files()
+  targeted_receiver <- get_targeted_receiver()
 
   THROW_START_EVENTS <- get_constants('throw_start_events')
   THROW_END_EVENTS <- get_constants('throw_end_events')
   OFFENSE_POSITIONS <- get_constants('offense_positions')
   DEFENSE_POSITIONS <- get_constants('defense_positions')
 
-  ## get targeted receiver
-  targeted_receiver <- read_targets() %>%
-    mutate(istarget = TRUE)
+  pbp_data <- weeks_to_use %>%
+    map(read_individual_week) %>%
+    bind_rows()
 
-  # track location of football
-  football_data <- weeks %>%
-    filter(.data$team == 'football') %>%
-    select('gameId', 'playId', 'frameId', 'x', 'y') %>%
-    rename(footballX = .data$x,
-           footballY = .data$y)
-
-  ## get the distance of the throw in yards
-  football_dist_traveled <- weeks %>%
-    filter(.data$team == 'football',
-           .data$event %in% c(THROW_START_EVENTS, THROW_END_EVENTS)) %>%
-    select('gameId', 'playId', 'frameId', 'x', 'y') %>%
-    group_by(.data$gameId, .data$playId) %>%
-    summarize(throwdist = sqrt((diff(.data$x) ** 2) + (diff(.data$y) ** 2)), .groups = 'keep') %>%
-    filter(n() == 1) %>%
-    ungroup()
-
+  football_locations <- get_football_locations(pbp_data)
+  throw_distances <- get_throw_dists(pbp_data, THROW_START_EVENTS, THROW_END_EVENTS)
+  max_throw_velo <- get_max_throw_velo(pbp_data)
+  target_location_at_throw <- get_target_location_at_throw(pbp_data)
+  football_locations_at_arrival <- get_football_location_at_arrival(pbp_data)
+  sacks_and_pis <- get_pi_and_sack(nonweek$plays)
+  play_outcomes <- get_play_outcomes(pbp_data, sacks_and_pis)
 
   throw_midpoint_frame_id <- weeks %>%
     filter(.data$event %in% c(THROW_END_EVENTS, THROW_START_EVENTS),
@@ -58,54 +202,9 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
     pivot_longer(cols = c(.data$startFrameId, .data$afterThrowFrameId, .data$midpointFrameId),
                  names_to = 'frame', values_to = 'frameId')
 
-  max_throw_velo <- weeks %>%
-    filter(.data$team == 'football') %>%
-    group_by(.data$gameId, .data$playId) %>%
-    summarize(max_throw_velo = max(.data$s), .groups = 'drop')
-
   ## TODO: fold this LA/EV into this fxn?
   throw_vectors <- create_throw_vectors(football_data, throw_midpoint_frame_id)
 
-  ## this takes a really long time but not sure how to speed it up.
-  ## just a lot of data to deal with on the back end
-  ## it outputs 17m rows
-  target_at_throw <- weeks %>%
-    filter(.data$position %in% c(OFFENSE_POSITIONS, DEFENSE_POSITIONS),
-           .data$team %in% c('home', 'away')) %>%
-    inner_join(football_data, by = c('gameId', 'playId', 'frameId')) %>%
-    mutate(offdef = ifelse(.data$position %in% OFFENSE_POSITIONS, 'off', 'def'),
-           dist_to_ball = sqrt((.data$x - .data$footballX)**2 + (.data$y - .data$footballY)**2)) %>%
-    left_join(targeted_receiver, by = c('gameId', 'playId', c('nflId' = 'targetNflId'))) %>%
-    mutate(istarget = ifelse(is.na(.data$istarget), FALSE, TRUE)) %>%
-    filter((.data$position %in% DEFENSE_POSITIONS) | .data$istarget,
-           .data$event %in% THROW_START_EVENTS)
-
-  ## this takes a really long time but not sure how to speed it up.
-  ## just a lot of data to deal with on the back end
-  ## it outputs 17m rows
-  football_loc_at_arrival <- weeks %>%
-    filter(.data$displayName == 'Football') %>%
-    filter(.data$event %in% THROW_END_EVENTS) %>%
-    select(.data$gameId, .data$playId, .data$x, .data$y) %>%
-    rename(footballXArr = .data$x,
-           footballYArr = .data$y)
-
-  pi_or_sack <- nonweek$plays %>%
-    select(.data$gameId, .data$playId, .data$passResult, .data$isDefensivePI)
-
-  ## 'R' pass result stands for Rush
-  ## 'S' stands for Sack
-  ## we probably don't want to keep those in the catch prob model
-  play_outcomes <- weeks %>%
-    inner_join(pi_or_sack, by = c('gameId', 'playId')) %>%
-    filter(.data$event %in% THROW_END_EVENTS,
-           .data$passResult %in% c('C', 'I', 'IN')) %>%
-    mutate(outcome = case_when(.data$passResult %in% c('I', 'IN') ~ 'Incomplete',
-                               .data$passResult == 'C' | .data$isDefensivePI ~ 'Complete')) %>%
-    select(.data$gameId, .data$playId, .data$outcome) %>%
-    distinct()
-
-  # get player locations at the time of throw
   player_at_throw <- target_at_throw %>%
     filter(.data$event %in% THROW_START_EVENTS) %>%
     mutate(offdef = case_when(.data$position %in% OFFENSE_POSITIONS ~ 'off',
@@ -117,20 +216,7 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
     inner_join(play_outcomes, by = c('gameId', 'playId'))
 
   # get locations of defenders at throw
-  defense_locs <- player_at_throw %>%
-    filter(.data$position %in% DEFENSE_POSITIONS) %>%
-    select(.data$gameId, .data$playId, .data$frameId, .data$nflId, .data$x, .data$y) %>%
-    add_throw_vector_to_positions(.data, throw_vectors) %>%
-    select(.data$gameId, .data$playId, .data$frameId,
-           .data$x, .data$y, .data$nflId, .data$distanceToThrow,
-           .data$angleToThrow, .data$timeToIntercept, .data$veloToIntercept) %>%
-    # rename(x_def = x,
-    #               y_def = y,
-    #               nflId_def = nflId)
-    # https://stackoverflow.com/questions/29948876/adding-prefix-or-suffix-to-most-data-frame-variable-names-in-piped-r-workflow
-    rename_at(vars(-c(.data$gameId, .data$playId, .data$frameId)), function(x) paste0((x), "_def")) %>%
-    group_by(.data$gameId, .data$playId, .data$frameId) %>%
-    filter(n() <= 11) ## throw out plays with > 11 guys on the field
+  defense_locs <- get_defense_locs_at_throw(player_at_throw, throw_vectors)
 
   defender_primary_positions <- weeks %>%
     select(.data$nflId, .data$position) %>%
