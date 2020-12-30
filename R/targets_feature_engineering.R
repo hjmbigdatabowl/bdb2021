@@ -145,7 +145,7 @@ do_target_prob_feature_eng <- function(weeks_to_use = 1:17){
                                  120 - .data$absoluteYardlineNumber - .data$yardsToGo - 10,
                                  .data$absoluteYardlineNumber + .data$yardsToGo - 10),
       distToFirst = .data$receiverX - .data$firstDownYardline,
-      position = ifelse(.data$receiverPosition == "HB", "RB", .data$receiverPosition),
+      receiverPosition = ifelse(.data$receiverPosition == "HB", "RB", .data$receiverPosition),
       oAdj = atan2(.data$xAdj, .data$yAdj) * 180 / pi,
       oAdjDiff = abs(.data$oAdj - .data$qbO),
       oAdjCos = cos((.data$oAdj - .data$qbO) * pi / 180)

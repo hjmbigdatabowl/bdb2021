@@ -137,7 +137,7 @@ tune_target_prob_rf <- function(data) {
   }
   data <- data %>%
     select(.data$xAdj, .data$yAdj, .data$defPosition,
-           .data$position, .data$defDistance, .data$distSideLine, .data$oAdjCos, .data$regressedTargets,
+           .data$receiverPosition, .data$defDistance, .data$distSideLine, .data$oAdjCos, .data$regressedTargets,
            .data$targetFlag) %>%
     mutate(across(where(is.character), as.factor))
 
