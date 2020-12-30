@@ -94,7 +94,7 @@ get_target_location_at_throw <- function(pbp, football_data, targeted_receiver) 
 get_football_location_at_arrival <- function(pbp) {
   THROW_END_EVENTS <- get_constants('THROW_END_EVENTS')
 
-  weeks %>%
+  pbp %>%
     filter(.data$displayName == 'Football') %>%
     filter(.data$event %in% THROW_END_EVENTS) %>%
     select(.data$gameId, .data$playId, .data$x, .data$y) %>%
@@ -134,6 +134,35 @@ get_play_outcomes <- function(pbp, pi_or_sack) {
     select(.data$gameId, .data$playId, .data$outcome) %>%
     distinct()
 }
+#' create_throw_vectors returns a data frame with throw vectors
+#' @return a data frame with information about the throw vector
+#' @param football_data a dataframe of football position data
+#' @param throw_midpoint_frame_id dataframe with the midpoint of the throw for each play
+#' @importFrom magrittr %>%
+#' @importFrom dplyr inner_join rename mutate filter
+#' @importFrom tidyr pivot_wider
+create_throw_vectors <- function(football_data, throw_midpoint_frame_id){
+  SECONDS_PER_FRAME <- .1  ## TODO: reconcile w/ value in matt_feature_eng.R
+  return(
+    throw_midpoint_frame_id %>%
+      inner_join(football_data) %>%
+      rename(x = .data$footballX, y = .data$footballY) %>%  ## TODO: will change football_data style
+      pivot_wider(
+        id_cols = c(.data$gameId, .data$playId),
+        names_from = frame,
+        names_glue = "{frame}_{.value}",
+        values_from = c(frameId, x, y)
+      ) %>%
+      mutate(
+        throwStartDist = sqrt((startFrameId_x - midpointFrameId_x)^2 + (startFrameId_y - midpointFrameId_y)^2),
+        throwStartTime = (midpointFrameId_frameId - startFrameId_frameId) * SECONDS_PER_FRAME,
+        throwSpeed = throwStartDist / throwStartTime,
+        throwAngle = (atan2((startFrameId_x - midpointFrameId_x), (startFrameId_y - midpointFrameId_y)) - pi/2) * 180 / pi,
+        throwAngle = ifelse(throwAngle < 0, 360 + throwAngle, throwAngle)
+      ) %>%
+      filter(!is.na(throwSpeed))
+  )
+}
 
 #' get_defense_locs_at_throw returns a data from of the locations of the defense at throw time
 #' @return a data frame with the locations of the defenders at throw time
@@ -144,16 +173,62 @@ get_play_outcomes <- function(pbp, pi_or_sack) {
 #' @importFrom rlang .data
 #'
 get_defense_locs_at_throw <- function(player_locs_at_throw, throw_vectors) {
+  DEFENSE_POSITIONS <- get_constants('defense_positions')
+
   player_locs_at_throw %>%
     filter(.data$position %in% DEFENSE_POSITIONS) %>%
     select(.data$gameId, .data$playId, .data$frameId, .data$nflId, .data$x, .data$y) %>%
-    add_throw_vector_to_positions(.data, throw_vectors) %>%
+    add_throw_vector_to_positions(., throw_vectors) %>%
     select(.data$gameId, .data$playId, .data$frameId,
            .data$x, .data$y, .data$nflId, .data$distanceToThrow,
            .data$angleToThrow, .data$timeToIntercept, .data$veloToIntercept) %>%
     rename_with(function(x) paste0((x), "_def"), -c(.data$gameId, .data$playId, .data$frameId)) %>%
     group_by(.data$gameId, .data$playId, .data$frameId) %>%
     filter(n() <= 11) ## throw out plays with > 11 guys on the field
+}
+#' add_throw_vector_to_positions
+#' TODO: document this
+add_throw_vector_to_positions <- function(release_positions, throw_vectors) {
+  return (
+    release_positions %>%
+      dplyr::left_join(throw_vectors, by=c('gameId', 'playId')) %>%
+      dplyr::mutate(
+        # pt0 = player, pt1 = release, pt2 = mid, https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
+        distanceToThrow = abs((x * (midpointFrameId_y - startFrameId_y)) - (y * (midpointFrameId_x - startFrameId_x)) + (midpointFrameId_x * startFrameId_y) - (midpointFrameId_y * startFrameId_x)) /  sqrt((startFrameId_x - midpointFrameId_x)^2 + (startFrameId_y - midpointFrameId_y)^2),
+        # try moving +90 degrees, calculating how far you are from the throw vector there
+        angleToThrowPositive = throwAngle + 90,
+        interceptPositiveX = x + (distanceToThrow * cos(angleToThrowPositive * pi / 180)),
+        interceptPositiveY = y + (distanceToThrow * sin(angleToThrowPositive * pi / 180)),
+        interceptToThrowPositive = abs(
+          ((interceptPositiveX * (midpointFrameId_y - startFrameId_y))
+           - (interceptPositiveY * (midpointFrameId_x - startFrameId_x))
+           + (midpointFrameId_x * startFrameId_y)
+           - (midpointFrameId_y * startFrameId_x))
+        ) / throwStartDist,
+        # then -90 degrees, then whichever one is smaller we take
+        angleToThrowNegative = throwAngle - 90,
+        interceptNegativeX = x + (distanceToThrow * cos(angleToThrowNegative * pi / 180)),
+        interceptNegativeY = y + (distanceToThrow * sin(angleToThrowNegative * pi / 180)),
+        interceptToThrowNegative = abs(
+          ((interceptNegativeX * (midpointFrameId_y - startFrameId_y))
+           - (interceptNegativeY * (midpointFrameId_x - startFrameId_x))
+           + (midpointFrameId_x * startFrameId_y)
+           - (midpointFrameId_y * startFrameId_x))
+        ) / throwStartDist,
+        angleToThrow = ifelse(
+          interceptToThrowNegative >= interceptToThrowPositive,
+          angleToThrowPositive,
+          angleToThrowNegative
+        ),
+        interceptX = x + (distanceToThrow * sin(angleToThrow * pi / 180)),
+        interceptY = y + (distanceToThrow * cos(angleToThrow * pi / 180)),
+        interceptToThrow = abs(((interceptX * (midpointFrameId_y - startFrameId_y)) - (interceptY * (midpointFrameId_x - startFrameId_x)) + (midpointFrameId_x * startFrameId_y) - (midpointFrameId_y * startFrameId_x))) / throwStartDist,
+        releaseToIntercept = sqrt((interceptX - startFrameId_x) ^ 2 + (interceptY - startFrameId_y) ^ 2),
+        timeToIntercept = releaseToIntercept / throwSpeed,
+        veloToIntercept = distanceToThrow / timeToIntercept,
+        interceptDiff = abs(((midpointFrameId_y - startFrameId_y) * (interceptX - midpointFrameId_x)) - ((interceptY - midpointFrameId_y) * (midpointFrameId_x - startFrameId_x))),
+      )
+  )
 }
 
 #' do_catch_prob_feat_eng build a data frame of catch prob features
@@ -187,12 +262,12 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
   football_locations <- get_football_locations(pbp_data)
   throw_distances <- get_throw_dists(pbp_data, THROW_START_EVENTS, THROW_END_EVENTS)
   max_throw_velo <- get_max_throw_velo(pbp_data)
-  target_location_at_throw <- get_target_location_at_throw(pbp_data)
+  target_location_at_throw <- get_target_location_at_throw(pbp_data, football_locations, targeted_receiver)
   football_locations_at_arrival <- get_football_location_at_arrival(pbp_data)
   sacks_and_pis <- get_pi_and_sack(nonweek$plays)
   play_outcomes <- get_play_outcomes(pbp_data, sacks_and_pis)
 
-  throw_midpoint_frame_id <- weeks %>%
+  throw_midpoint_frame_id <- pbp_data %>%
     filter(.data$event %in% c(THROW_END_EVENTS, THROW_START_EVENTS),
            .data$team == 'football') %>%
     group_by(.data$gameId, .data$playId) %>%
@@ -203,9 +278,9 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
                  names_to = 'frame', values_to = 'frameId')
 
   ## TODO: fold this LA/EV into this fxn?
-  throw_vectors <- create_throw_vectors(football_data, throw_midpoint_frame_id)
+  throw_vectors <- create_throw_vectors(football_locations, throw_midpoint_frame_id)
 
-  player_at_throw <- target_at_throw %>%
+  player_at_throw <- target_location_at_throw %>%
     filter(.data$event %in% THROW_START_EVENTS) %>%
     mutate(offdef = case_when(.data$position %in% OFFENSE_POSITIONS ~ 'off',
                               .data$position %in% DEFENSE_POSITIONS ~ 'def')) %>%
@@ -218,7 +293,7 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
   # get locations of defenders at throw
   defense_locs <- get_defense_locs_at_throw(player_at_throw, throw_vectors)
 
-  defender_primary_positions <- weeks %>%
+  defender_primary_positions <- pbp_data %>%
     select(.data$nflId, .data$position) %>%
     rename(nflId_def = .data$nflId,
            def_pos = .data$position) %>%
@@ -241,7 +316,7 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
            .data$personnelO, .data$defendersInTheBox, .data$numberOfPassRushers,
            .data$personnelD, .data$preSnapVisitorScore, .data$preSnapHomeScore, .data$epa)
 
-  teamabbrs <- teams_colors_logos %>%
+  teamabbrs <- nflfastR::teams_colors_logos %>%
     select(.data$team_abbr, .data$team_nick) %>%
     mutate(team_nick = ifelse(.data$team_nick == 'Football Team', 'Washington', .data$team_nick))
 
@@ -264,7 +339,7 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
                                   .data$conditions == 'Foggy'  ~ 'Foggy',
                                   TRUE ~ 'Clear'))
 
-  target_position_at_throw <- target_at_throw %>%
+  target_position_at_throw <- target_location_at_throw %>%
     filter(.data$istarget) %>%
     select(.data$gameId, .data$playId, .data$x,.data$y,.data$s,.data$a) %>%
     rename(targetXThrow = .data$x,
@@ -286,32 +361,32 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
            mean_dist_to_def = mean(.data$dist_to_def),
            sd_dist_to_def = sd(.data$dist_to_def),
            min_velo_def = min(.data$veloToIntercept_def)) %>%
-    distinct(.data) %>%
+    distinct() %>%
     arrange(.data$dist_to_def) %>%
     mutate(defenderId = 1:n()) %>%
-    ungroup(.data) %>%
+    ungroup() %>%  # CHANGED HERE
     pivot_wider(id_cols = c(.data$gameId, .data$playId, .data$frameId, .data$outcome, .data$min_dist_to_def, .data$sd_dist_to_def, .data$min_velo_def),
                 names_from = .data$defenderId,
                 names_sep = "_",
                 values_from = c(.data$dist_to_def, .data$grouped_def_pos, .data$veloToIntercept_def, .data$nflId_def)) %>%
     left_join(targeted_receiver %>% select(-c(.data$istarget)), by = c('gameId', 'playId')) %>%
     left_join(max_throw_velo, by = c('gameId', 'playId')) %>%
-    left_join(football_dist_traveled, by = c('gameId', 'playId')) %>%
+    left_join(throw_distances, by = c('gameId', 'playId')) %>%
     mutate(across(c(starts_with("dist_to_def"), starts_with("veloToIntercept")), function(x) ifelse(is.na(x), 999, x)),
            across(starts_with("grouped_def_pos"), function(x) ifelse(is.na(x), 'Line', x))) %>%
     group_by(.data$gameId, .data$playId) %>%
     filter(n() == 1) %>%
-    ungroup(.data) %>%
+    ungroup() %>%  # CHANGED HERE
     left_join(play_data, by = c('gameId', 'playId')) %>%
-    rowwise(.data) %>%
+    rowwise() %>%
     mutate(numberOfPassRushers = as.numeric(.data$numberOfPassRushers),
            defendersInTheBox = as.numeric(.data$defendersInTheBox),
            numberOfPassRushers = as.numeric(case_when(is.na(.data$numberOfPassRushers) & is.na(.data$defendersInTheBox) ~ as.numeric(sum(c_across(.data$dist_to_def_1:.data$dist_to_def_11) == 999)),
                                                       is.na(.data$numberOfPassRushers) ~ as.numeric((sum(c_across(.data$dist_to_def_1:.data$dist_to_def_11) == 999) + .data$defendersInTheBox) / 2),
                                                       TRUE ~ as.numeric(.data$numberOfPassRushers)))) %>%
-    ungroup(.data) %>%
+    ungroup() %>%  # CHANGED HERE
     left_join(weather, by = 'gameId') %>%
-    left_join(football_loc_at_arrival, by = c('gameId', 'playId')) %>%
+    left_join(football_locations_at_arrival, by = c('gameId', 'playId')) %>%
     left_join(target_position_at_throw, by = c('gameId', 'playId'))
 
   return(df)
