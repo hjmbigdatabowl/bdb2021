@@ -174,7 +174,7 @@ tune_target_prob_rf <- function(data) {
   rf_res <- tune_bayes(
     rf_wf,
     resamples = data_folds,
-    param_info = xgb_params,
+    param_info = rf_params,
     iter = 500,
     metrics = metric_set(roc_auc,
                          bal_accuracy,
