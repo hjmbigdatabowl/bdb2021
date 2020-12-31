@@ -273,6 +273,15 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
   sacks_and_pis <- get_pi_and_sack(nonweek$plays)
   play_outcomes <- get_play_outcomes(pbp_data, sacks_and_pis)
 
+  ## i'll factor this out later
+  receiver_skill <- pbp_data %>%
+    select(gameId, playId, nflId) %>%
+    distinct() %>%
+    inner_join(targeted_receiver %>% rename(nflId = targetNflId), by = c('gameId', "playId", 'nflId')) %>%
+    inner_join(play_outcomes, by = c('gameId', 'playId')) %>%
+    group_by(nflId) %>%
+    summarize(skill = sum(outcome == 'Complete') / sqrt(n()), .groups = 'drop')
+
   throw_midpoint_frame_id <- pbp_data %>%
     filter(.data$event %in% c(THROW_END_EVENTS, THROW_START_EVENTS),
            .data$team == 'football') %>%
@@ -372,7 +381,8 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
     ungroup() %>%  # CHANGED HERE
     left_join(weather, by = 'gameId') %>%
     left_join(football_locations_at_arrival, by = c('gameId', 'playId')) %>%
-    left_join(target_position_at_throw, by = c('gameId', 'playId'))
+    left_join(target_position_at_throw, by = c('gameId', 'playId')) %>%
+    left_join(receiver_skill, by = c('targetNflId' = 'nflId'))
 
   return(df)
 }

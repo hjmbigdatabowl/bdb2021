@@ -34,7 +34,7 @@ tune_catch_prob_xgb <- function(data) {
   data <- data %>%
     select(.data$dist_to_def_1:.data$veloToIntercept_def_11, .data$max_throw_velo, .data$throwdist,
            .data$numberOfPassRushers, .data$targetXThrow, .data$targetYThrow, .data$footballXArr, .data$footballYArr,
-           .data$conditions, .data$temperature, .data$targetSThrow, .data$targetAThrow, .data$outcome) %>%
+           .data$conditions, .data$temperature, .data$targetSThrow, .data$targetAThrow, .data$skill, .data$outcome) %>%
     mutate(across(where(is.character), as.factor))
 
   data_split <- initial_split(data, strata = outcome)
