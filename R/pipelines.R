@@ -5,6 +5,7 @@
 #' @export
 #'
 run_catch_prob_tuning_pipeline <- function() {
+  set.seed(14159)
   df <- do_catch_prob_feat_eng()
   train <- df %>%
     sample_frac(.8)
@@ -18,6 +19,6 @@ run_catch_prob_tuning_pipeline <- function() {
                                          data_split = catch_prob_tuning_results$data_split,
                                          data = catch_prob_tuning_results$data)
   logit_model <- fit_logit_platt_scaler(catch_prob_model$final_xgb, train)
-  catch_prob_diagnostic_plots(train, test, final_xgb, logit_model)
+  catch_prob_diagnostic_plots(train, test, catch_prob_model$final_xgb, logit_model)
   make_catch_prob_table(df, final_xgb, logit_model, 1000, 50, TRUE)
 }
