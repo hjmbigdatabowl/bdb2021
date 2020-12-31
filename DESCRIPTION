@@ -31,4 +31,7 @@ Imports:
     doParallel (>= 1.0.16),
     recipes (>= 0.1.13),
     rsample (>= 0.0.8),
-    workflows (>= 0.2.0)
+    workflows (>= 0.2.0),
+    ggplot2 (>= 3.3.2),
+    vip (>= 0.3.2),
+    probably (>= 0.0.6)
