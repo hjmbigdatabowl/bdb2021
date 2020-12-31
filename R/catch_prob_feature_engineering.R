@@ -119,7 +119,7 @@ get_pi_and_sack <- function(plays) {
 #' @return a data frame with the play outcomes
 #' @param pbp the play by play data
 #' @importFrom magrittr %>%
-#' @importFrom dplyr select filter mutate distinct inner_join
+#' @importFrom dplyr select filter mutate distinct inner_join case_when
 #' @importFrom rlang .data
 #'
 get_play_outcomes <- function(pbp, pi_or_sack) {
@@ -244,7 +244,7 @@ add_throw_vector_to_positions <- function(release_positions, throw_vectors) {
 #' @importFrom magrittr %>%
 #' @importFrom purrr map
 #' @importFrom tidyr pivot_longer pivot_wider drop_na separate
-#' @importFrom stringr str_replace str_remove_all
+#' @importFrom stringr str_remove_all
 #' @importFrom stats sd
 #' @importFrom rlang .data
 #' @import nflfastR
@@ -322,28 +322,7 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
            .data$personnelO, .data$defendersInTheBox, .data$numberOfPassRushers,
            .data$personnelD, .data$preSnapVisitorScore, .data$preSnapHomeScore, .data$epa)
 
-  teamabbrs <- nflfastR::teams_colors_logos %>%
-    select(.data$team_abbr, .data$team_nick) %>%
-    mutate(team_nick = ifelse(.data$team_nick == 'Football Team', 'Washington', .data$team_nick))
-
-  weather_raw <- map(weeks_to_use, get_weather, 2018) %>%
-    bind_rows()
-
-  weather <- nonweek$games %>%
-    left_join(teamabbrs %>% rename(Home = .data$team_nick), by = c('homeTeamAbbr' = 'team_abbr')) %>%
-    left_join(teamabbrs %>% rename(Away = .data$team_nick), by = c('visitorTeamAbbr' = 'team_abbr')) %>%
-    left_join(weather_raw, by = c('Home', 'Away', 'week')) %>%
-    select(.data$gameId, .data$Forecast) %>%
-    mutate(Forecast = str_replace(.data$Forecast, "\\s", "|"),
-           Forecast = case_when(.data$Forecast == 'DOME' ~ '70f|Dome',
-                                TRUE ~ .data$Forecast)) %>%
-    separate(.data$Forecast, into = c('temperature', 'conditions'), sep = "\\|") %>%
-    mutate(temperature = str_remove_all(.data$temperature, "[^0-9]") %>% as.numeric(.data),
-           conditions = case_when(grepl('rain', .data$conditions, ignore.case = T) | .data$conditions == 'Drizzle' ~ 'Rain',
-                                  grepl('snow', .data$conditions, ignore.case = T) ~ 'Snow',
-                                  .data$conditions == 'Dome' ~ 'Dome',
-                                  .data$conditions == 'Foggy'  ~ 'Foggy',
-                                  TRUE ~ 'Clear'))
+  weather <- build_weather_df(weeks_to_use)
 
   target_position_at_throw <- target_location_at_throw %>%
     filter(.data$istarget) %>%
@@ -420,4 +399,40 @@ get_weather <- function(week, year) {
   return(page)
 }
 
+#' build_weather_df returns a dataframe with parsed weather information for each gameId
+#'
+#' @param weeks_to_use weeks to get weather data for
+#' @return a data frame of forecasts matched to the appropriate game
+#' @importFrom magrittr %>%
+#' @importFrom tidyr separate
+#' @importFrom dplyr select mutate left_join rename case_when
+#' @importFrom stringr str_replace
+#'
+build_weather_df <- function(weeks_to_use){
+  teamabbrs <- nflfastR::teams_colors_logos %>%
+    select(.data$team_abbr, .data$team_nick) %>%
+    mutate(team_nick = ifelse(.data$team_nick == 'Football Team', 'Washington', .data$team_nick))
 
+  weather_raw <- map(weeks_to_use, get_weather, 2018) %>%
+    bind_rows()
+
+  nonweek <- read_non_week_files()
+
+  weather <- nonweek$games %>%
+    left_join(teamabbrs %>% rename(Home = .data$team_nick), by = c('homeTeamAbbr' = 'team_abbr')) %>%
+    left_join(teamabbrs %>% rename(Away = .data$team_nick), by = c('visitorTeamAbbr' = 'team_abbr')) %>%
+    left_join(weather_raw, by = c('Home', 'Away', 'week')) %>%
+    select(.data$gameId, .data$Forecast) %>%
+    mutate(Forecast = str_replace(.data$Forecast, "\\s", "|"),
+           Forecast = case_when(.data$Forecast == 'DOME' ~ '70f|Dome',
+                                TRUE ~ .data$Forecast)) %>%
+    separate(.data$Forecast, into = c('temperature', 'conditions'), sep = "\\|") %>%
+    mutate(temperature = str_remove_all(.data$temperature, "[^0-9]") %>% as.numeric(.data),
+           conditions = case_when(grepl('rain', .data$conditions, ignore.case = T) | .data$conditions == 'Drizzle' ~ 'Rain',
+                                  grepl('snow', .data$conditions, ignore.case = T) ~ 'Snow',
+                                  .data$conditions == 'Dome' ~ 'Dome',
+                                  .data$conditions == 'Foggy'  ~ 'Foggy',
+                                  TRUE ~ 'Clear'))
+  return(weather)
+
+}

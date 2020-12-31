@@ -86,6 +86,9 @@ do_target_prob_feature_eng <- function(weeks_to_use = 1:17){
   DEFENSIVE_BACK_POSITIONS <- get_constants("defensive_back_positions")
   THROW_START_EVENTS <- get_constants("throw_start_events")
 
+  weather <- build_weather_df(weeks_to_use) %>%
+    mutate(gameId = as.character(gameId))
+
   # get position data, make changes to coordinate system to have all plays go in one direction
   plays <- weeks_to_use %>%
     map(read_individual_week) %>%
@@ -176,18 +179,25 @@ do_target_prob_feature_eng <- function(weeks_to_use = 1:17){
            targetFlag = as.numeric(.data$receiverName == .data$pbpReceiverName),
            defDistance = sqrt((.data$receiverX - .data$defX)**2 + (.data$receiverY - .data$defY)**2)) %>%
     group_by(.data$gameId, .data$playId, .data$receiverId) %>%
-    slice(which.min(defDistance)) %>%
+    arrange(defDistance) %>%
+    mutate(defPlayId = 1:n()) %>%
+    filter(defPlayId <= 3) %>%
+    ungroup() %>%
+    pivot_wider(names_from=.data$defPlayId,
+                values_from=c(.data$defX, .data$defY, .data$defId, .data$defPosition, .data$defDistance),
+                names_sep='') %>%
+    group_by(.data$gameId, .data$playId) %>%
+    arrange(-defDistance1) %>%
+    mutate(minDefDistancePlay = min(.data$defDistance1),
+           maxDefDistancePlay = max(.data$defDistance1),
+           playOpenRank = 1:n()) %>%
     ungroup() %>%
     group_by(.data$gameId, .data$playId) %>%
     mutate(targets = sum(.data$targetFlag)) %>%
     filter(.data$targets == 1) %>%
     ungroup() %>%
-    select(c("playId", "gameId", "ToLeft", "receiverX", "receiverY", "receiverSpeed", "receiverDir", "receiverO", "receiverDir",
-             "receiverRoute", "receiverPosition", "xAdj", "yAdj", "defX", "defY", "defDistance", "defPosition", "distSideLine",
-             "halfSecondsRemaining", "scoreDifferential", "receiverId", "receiverName", "qbName", "qbId", "qbX", "qbY",
-             "qbSpeed", "qbDir", "qbO", "targetFlag")) %>%
     mutate(receiverId = as.factor(.data$receiverId),
-           qbId = as.factor(.data$qbId))%>%
+           qbId = as.factor(.data$qbId)) %>%
     left_join(
       play_metadata %>%
         select("gameId", "playId", "possessionTeam", "defendingTeam", "yardsToGo", "typeDropback", "defendersInTheBox",
@@ -201,12 +211,12 @@ do_target_prob_feature_eng <- function(weeks_to_use = 1:17){
                                  120 - .data$absoluteYardlineNumber - .data$yardsToGo - 10,
                                  .data$absoluteYardlineNumber + .data$yardsToGo - 10),
       distToFirst = .data$receiverX - .data$firstDownYardline,
+      distToEndzone = .data$receiverX - 100,
       receiverPosition = ifelse(.data$receiverPosition == "HB", "RB", .data$receiverPosition),
-      oAdj = atan2(.data$xAdj, .data$yAdj) * 180 / pi,
-      oAdjDiff = abs(.data$oAdj - .data$qbO),
-      oAdjCos = cos((.data$oAdj - .data$qbO) * pi / 180)
+      oAdj = atan2(.data$xAdj, .data$yAdj) * 180 / pi
     ) %>%
-    filter(!is.na(.data$oAdjCos))
+    filter(!is.na(.data$oAdj)) %>%
+    left_join(weather, by = 'gameId')
 
   throw_target_data <- add_receiver_target_rates(throw_target_data)
 
