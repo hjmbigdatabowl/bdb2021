@@ -186,13 +186,19 @@ get_defense_locs_at_throw <- function(player_locs_at_throw, throw_vectors) {
     group_by(.data$gameId, .data$playId, .data$frameId) %>%
     filter(n() <= 11) ## throw out plays with > 11 guys on the field
 }
-#' add_throw_vector_to_positions
-#' TODO: document this
+
+#' add_throw_vector_to_positions takes player positions at release along with throw information to calculate how close the player is to the throw
+#' @return a dataframe with the distance & time the player has to reach the throw
+#' @param release_positions player positions at release of ball
+#' @param throw_vectors information about the pass
+#' @importFrom  magrittr %>%
+#' @importFrom dplyr left_join mutate
+#'
 add_throw_vector_to_positions <- function(release_positions, throw_vectors) {
   return (
     release_positions %>%
-      dplyr::left_join(throw_vectors, by=c('gameId', 'playId')) %>%
-      dplyr::mutate(
+      left_join(throw_vectors, by=c('gameId', 'playId')) %>%
+      mutate(
         # pt0 = player, pt1 = release, pt2 = mid, https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
         distanceToThrow = abs((x * (midpointFrameId_y - startFrameId_y)) - (y * (midpointFrameId_x - startFrameId_x)) + (midpointFrameId_x * startFrameId_y) - (midpointFrameId_y * startFrameId_x)) /  sqrt((startFrameId_x - midpointFrameId_x)^2 + (startFrameId_y - midpointFrameId_y)^2),
         # try moving +90 degrees, calculating how far you are from the throw vector there
