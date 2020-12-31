@@ -2,7 +2,7 @@
 % Please edit documentation in R/model_diagnostics.R
 \name{catch_prob_diagnostic_plots}
 \alias{catch_prob_diagnostic_plots}
-\title{recalc_prob recalculate the catch probabilities after removing a defender}
+\title{catch_prob_diagnostic_plots make catch prob model diagnostic plots}
 \usage{
 catch_prob_diagnostic_plots(train, test, xgb_model, logit_model)
 }
@@ -19,5 +19,5 @@ catch_prob_diagnostic_plots(train, test, xgb_model, logit_model)
 A success string
 }
 \description{
-recalc_prob recalculate the catch probabilities after removing a defender
+catch_prob_diagnostic_plots make catch prob model diagnostic plots
 }

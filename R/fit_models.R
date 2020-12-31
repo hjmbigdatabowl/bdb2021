@@ -36,6 +36,7 @@ fit_catch_prob_xgb <- function(workflow, pars, data_split, data) {
 #' @importFrom magrittr %>%
 #' @importFrom tune finalize_workflow last_fit
 #' @importFrom parsnip fit
+#' @importFrom stats predict
 #' @export
 #'
 fit_target_prob_rf <- function(workflow, pars, data_split, data) {
@@ -64,12 +65,13 @@ fit_target_prob_rf <- function(workflow, pars, data_split, data) {
 #' @importFrom parsnip fit logistic_reg set_engine predict.model_fit
 #' @importFrom dplyr mutate
 #' @importFrom rlang .data
+#' @importFrom stats predict
 #' @export
 #'
 fit_logit_platt_scaler <- function(model, data) {
 
   preds <- data %>%
-    mutate(predprob = predict.model_fit(model, .data, type = 'prob')$.pred_Complete,
+    mutate(predprob = predict(model, ., type = 'prob')$.pred_Complete,
            target = as.factor(.data$outcome))
 
   logit_model <- logistic_reg() %>%
@@ -89,12 +91,13 @@ fit_logit_platt_scaler <- function(model, data) {
 #' @importFrom parsnip predict.model_fit
 #' @importFrom dplyr mutate
 #' @importFrom rlang .data
+#' @importFrom stats predict
 #' @export
 #'
 stepwise_catch_prob_predict <- function(data, xgb_model, logit_model) {
   preds <- data %>%
-    mutate(predprob = predict.model_fit(xgb_model, .data, type = 'prob')$.pred_Complete,
-           calibratedprob = predict.model_fit(logit_model, .data, type = 'prob')$.pred_Complete)
+    mutate(predprob = predict(xgb_model, ., type = 'prob')$.pred_Complete) %>%
+    mutate(calibratedprob = predict(logit_model, ., type = 'prob')$.pred_Complete)
 
   return(preds$calibratedprob)
 }
@@ -109,12 +112,13 @@ stepwise_catch_prob_predict <- function(data, xgb_model, logit_model) {
 #' @importFrom parsnip predict.model_fit
 #' @importFrom dplyr mutate
 #' @importFrom rlang .data
+#' @importFrom stats predict
 #' @export
 #'
-stepwise_catch_prob_predict <- function(data, rf_model, logit_model) {
+stepwise_target_prob_predict <- function(data, rf_model, logit_model) {
   preds <- data %>%
-    mutate(predprob = predict.model_fit(rf_model, .data, type = 'prob')$.pred_Complete,
-           calibratedprob = predict.model_fit(logit_model, .data, type = 'prob')$.pred_Complete)
+    mutate(predprob = predict(rf_model, ., type = 'prob')$.pred_Complete,
+           calibratedprob = predict(logit_model, ., type = 'prob')$.pred_Complete)
 
   return(preds$calibratedprob)
 }

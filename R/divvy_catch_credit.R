@@ -13,7 +13,7 @@
 recalc_prob <- function(defender_to_remove, data, xgb_model, logit_model) {
 
   data <- data %>%
-    mutate(calibratedpreds = stepwise_catch_prob_predict(.data, xgb_model, logit_model))
+    mutate(calibratedpreds = stepwise_catch_prob_predict(., xgb_model, logit_model))
 
 
   idcol_to_remove <- data[[glue('nflId_def_{defender_to_remove}')]]

@@ -1,3 +1,12 @@
+#' gt_theme_538 the Fivethirtyeight GT theme
+#' @return list: the table in data frame form and gt form
+#' @param data the data to use to build the table
+#' @param xgb_model the xgboost model
+#' @param ... other parameters
+#' @importFrom magrittr %>%
+#' @import gt
+#' @export
+#'
 gt_theme_538 <- function(data,...) {
   data %>%
     gt::opt_all_caps()  %>%
@@ -36,16 +45,28 @@ gt_theme_538 <- function(data,...) {
     )
 }
 
-make_catch_prob_table <- function(data, model, num = 1000, playcutoff = 300, show_top = TRUE) {
-  `%>%` <- magrittr::`%>%`
-  source("R/divvy_catch_credit.R")
+#' make_catch_prob_table makes the drops added table
+#' @return list: the table in data frame form and gt form
+#' @param data the data to use to build the table
+#' @param xgb_model the xgboost model
+#' @param logit_model the logit model for platt scaling
+#' @param num the number of players to include in the table (default: 1000)
+#' @param playcutoff the min number of plays (default: 300)
+#' @param show_top True sorts by the top players, False sorts by the worst
+#' @importFrom magrittr %>%
+#' @importFrom tidyr pivot_longer drop_na
+#' @import dplyr
+#' @import gt
+#' @export
+#'
+make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, playcutoff = 300, show_top = TRUE) {
 
-  preds <- stepwise_predict(data, model)
+  preds <- stepwise_catch_prob_predict(data, xgb_model, logit_model)
 
   teams_colors_logos <- nflfastR::teams_colors_logos
   nonweek <- read_non_week_files()
 
-  credit <- divvy_credit(data, model)
+  credit <- divvy_credit(data, xgb_model, logit_model)
 
   ids <- data %>%
     left_join(credit, by = c('gameId', 'playId')) %>%

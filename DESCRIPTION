@@ -34,4 +34,5 @@ Imports:
     workflows (>= 0.2.0),
     ggplot2 (>= 3.3.2),
     vip (>= 0.3.2),
-    probably (>= 0.0.6)
+    probably (>= 0.0.6),
+    gt (>= 0.2.2)

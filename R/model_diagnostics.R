@@ -1,4 +1,4 @@
-#' recalc_prob recalculate the catch probabilities after removing a defender
+#' catch_prob_diagnostic_plots make catch prob model diagnostic plots
 #' @param train the training set
 #' @param test the test set
 #' @param xgb_model the xgboost model
@@ -14,10 +14,11 @@
 #' @importFrom graphics cdplot
 #' @import ggplot2
 #' @import dplyr
+#' @export
 catch_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model) {
   preds <- train %>%
     mutate(target = as.factor(outcome),
-                  calibratedprob = stepwise_catch_prob_predict(.data, xgb_model, logit_model))
+           calibratedprob = stepwise_catch_prob_predict(., xgb_model, logit_model))
 
   (
     roc_plot <- preds %>%
