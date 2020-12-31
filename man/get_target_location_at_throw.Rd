@@ -8,6 +8,10 @@ get_target_location_at_throw(pbp, football_data, targeted_receiver)
 }
 \arguments{
 \item{pbp}{a dataframe of play-by-play data}
+
+\item{football_data}{the football data}
+
+\item{targeted_receiver}{the targets data}
 }
 \value{
 a data frame with the positions

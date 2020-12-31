@@ -17,7 +17,7 @@
 #' @export
 #'
 tune_catch_prob_xgb <- function(data) {
-  ncores <- rstudioapi::showPrompt(
+  ncores <- showPrompt(
     title = "Cores", message = "How many cores do you want to use? Use parallel::detectCores() to see how many cores are available.", default = 4
   )
 
@@ -25,9 +25,9 @@ tune_catch_prob_xgb <- function(data) {
 
   if (is.na(ncores)){
     stop("Error: Improper number of cores provided. Please provide an integer greater than or equal to 1.")
-  } else if (ncores > parallel::detectCores()){
+  } else if (ncores > detectCores()){
     stop("Error: Number of cores specified exceeds number of cores available on this machine. Please specify an integer between 1 and the value output by parallel::detectCores().")
-  } else if (ncores == parallel::detectCores()) {
+  } else if (ncores == detectCores()) {
     askYesNo("Warning: Number of cores provided is equal to the number of cores detected on this machine. This may impact performance for other programs on your computer. Do you wish to proceed?")
   }
 
@@ -37,7 +37,7 @@ tune_catch_prob_xgb <- function(data) {
            .data$conditions, .data$temperature, .data$targetSThrow, .data$targetAThrow, .data$skill, .data$outcome) %>%
     mutate(across(where(is.character), as.factor))
 
-  data_split <- initial_split(data, strata = outcome)
+  data_split <- initial_split(data, strata = .data$outcome)
   data_train <- training(data_split)
   data_test <- testing(data_split)
 
@@ -71,7 +71,7 @@ tune_catch_prob_xgb <- function(data) {
     add_recipe(prep_rec) %>%
     add_model(xgb_spec)
 
-  data_folds <- vfold_cv(data_train, strata = outcome)
+  data_folds <- vfold_cv(data_train, strata = .data$outcome)
 
   registerDoParallel(cores = ncores)
   xgb_res <- tune_bayes(
@@ -116,11 +116,13 @@ tune_catch_prob_xgb <- function(data) {
 #' @importFrom workflows workflow add_recipe add_model
 #' @importFrom yardstick roc_auc  f_meas kap accuracy bal_accuracy metric_set
 #' @importFrom doParallel registerDoParallel
+#' @importFrom rstudioapi showPrompt
+#' @importFrom parallel detectCores
 #' @import dials
 #' @export
 #'
 tune_target_prob_rf <- function(data) {
-  ncores <- rstudioapi::showPrompt(
+  ncores <- showPrompt(
     title = "Cores", message = "How many cores do you want to use? Use parallel::detectCores() to see how many cores are available.", default = 4
   )
 
@@ -128,10 +130,10 @@ tune_target_prob_rf <- function(data) {
 
   if(is.na(ncores)){
     stop("Error: Improper number of cores provided. Please provide an integer greater than or equal to 1.")
-  } else if(ncores > parallel::detectCores()){
+  } else if(ncores > detectCores()){
     stop("Error: Number of cores specified exceeds number of cores available on this machine. Please specify an integer between 1 and the value output by parallel::detectCores().")
   }
-  else if(ncores == parallel::detectCores()){
+  else if(ncores == detectCores()){
     askYesNo("Warning: Number of cores provided is equal to the number of cores detected on this machine. This may impact performance for other programs on your computer. Do you wish to proceed?")
   }
   data <- data %>%

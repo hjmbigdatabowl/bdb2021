@@ -12,20 +12,23 @@
 #' @importFrom vip vip
 #' @importFrom yardstick roc_auc
 #' @importFrom graphics cdplot
+#' @importFrom grDevices dev.off jpeg
+#' @importFrom workflows pull_workflow_fit
+#' @importFrom utils write.csv
 #' @import ggplot2
 #' @import dplyr
 #' @export
 catch_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model) {
   preds <- train %>%
-    mutate(target = as.factor(outcome),
-           calibratedprob = stepwise_catch_prob_predict(., xgb_model, logit_model))
+    mutate(target = as.factor(.data$outcome),
+           calibratedprob = stepwise_catch_prob_predict(.data, xgb_model, logit_model))
 
   (
     roc_plot <- preds %>%
-      threshold_perf(target, calibratedprob, thresholds = seq(0, 1, by = .01)) %>%
-      pivot_wider(id_cols = .threshold, names_from = .metric, values_from = .estimate) %>%
-      ggplot(aes(x = (1-spec), y = sens)) +
-      geom_point(aes(color = .threshold)) +
+      threshold_perf(.data$target, .data$calibratedprob, thresholds = seq(0, 1, by = .01)) %>%
+      pivot_wider(id_cols = .data$.threshold, names_from = .data$.metric, values_from = .data$.estimate) %>%
+      ggplot(aes(x = (1-.data$spec), y = .data$sens)) +
+      geom_point(aes(color = .data$.threshold)) +
       geom_line() +
       geom_abline(slope = 1, intercept = 0) +
       labs(x = 'FPR', y = 'TPR') +
@@ -34,21 +37,21 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model) {
 
 
   preds %>%
-    threshold_perf(target, calibratedprob, thresholds = seq(.05, .95, by = .01)) %>%
-    pivot_wider(id_cols = .threshold, names_from = .metric, values_from = .estimate) %>%
-    ggplot(aes(.threshold, distance)) +
+    threshold_perf(.data$target, .data$calibratedprob, thresholds = seq(.05, .95, by = .01)) %>%
+    pivot_wider(id_cols = .data$.threshold, names_from = .data$.metric, values_from = .data$.estimate) %>%
+    ggplot(aes(.data$.threshold, .data$distance)) +
     geom_point()
 
   THRESHOLD_TO_USE <- preds %>%
-    threshold_perf(target, calibratedprob, thresholds = seq(0, 1, by = .01)) %>%
-    pivot_wider(id_cols = .threshold, names_from = .metric, values_from = .estimate) %>%
-    filter(distance == min(distance)) %>%
-    pull(.threshold)
+    threshold_perf(.data$target, .data$calibratedprob, thresholds = seq(0, 1, by = .01)) %>%
+    pivot_wider(id_cols = .data$.threshold, names_from = .data$.metric, values_from = .data$.estimate) %>%
+    filter(.data$distance == min(.data$distance)) %>%
+    pull(.data$.threshold)
 
   results <- test %>%
-    mutate(target = as.factor(outcome),
-                  predprob = stepwise_catch_prob_predict(., xgb_model, logit_model),
-                  pred_outcome = ifelse(predprob > THRESHOLD_TO_USE, 'Complete', 'Incomplete'))
+    mutate(target = as.factor(.data$outcome),
+                  predprob = stepwise_catch_prob_predict(.data, xgb_model, logit_model),
+                  pred_outcome = ifelse(.data$predprob > THRESHOLD_TO_USE, 'Complete', 'Incomplete'))
 
   jpeg("inst/plots/cdplot.jpg", width = 350, height = 300)
   cdplot(results$predprob, as.factor(results$target))
@@ -56,36 +59,36 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model) {
 
 
   (
-    predhist <- ggplot(results, aes(predprob)) + geom_histogram()
+    predhist <- ggplot(results, aes(.data$predprob)) + geom_histogram()
   )
 
   confusion_matrix <- results %>%
-    mutate(cmat = case_when(pred_outcome == 'Complete' & outcome == 'Complete' ~ 'TP',
-                                          pred_outcome == 'Complete' & outcome == 'Incomplete' ~ 'FP',
-                                          pred_outcome == 'Incomplete' & outcome == 'Complete' ~ 'FN',
-                                          pred_outcome == 'Incomplete' & outcome == 'Incomplete' ~ 'TN')) %>%
-    count(cmat)
+    mutate(cmat = case_when(.data$pred_outcome == 'Complete' & .data$outcome == 'Complete' ~ 'TP',
+                            .data$pred_outcome == 'Complete' & .data$outcome == 'Incomplete' ~ 'FP',
+                            .data$pred_outcome == 'Incomplete' & .data$outcome == 'Complete' ~ 'FN',
+                            .data$pred_outcome == 'Incomplete' & .data$outcome == 'Incomplete' ~ 'TN')) %>%
+    count(.data$cmat)
 
   (
     metrics <- confusion_matrix %>%
-      pivot_wider(names_from = cmat, values_from = n) %>%
-      mutate(precision = TP / (TP + FP),
-                    recall = TP / (TP + FN),
-                    specificity = TN / (TN + FP),
-                    acc = (TP + TN) / (TP + TN + FP + FN),
-                    fnr = (FN) / (FN + TP),
-                    fpr = 1 - specificity,
-                    auc = roc_auc(results, target, predprob)$.estimate) %>%
-      select(-c(FN:TP))
+      pivot_wider(names_from = .data$cmat, values_from = .data$n) %>%
+      mutate(precision = .data$TP / (.data$TP + .data$FP),
+                    recall = .data$TP / (.data$TP + .data$FN),
+                    specificity = .data$TN / (.data$TN + .data$FP),
+                    acc = (.data$TP + .data$TN) / (.data$TP + .data$TN + .data$FP + .data$FN),
+                    fnr = (.data$FN) / (.data$FN + .data$TP),
+                    fpr = 1 - .data$specificity,
+                    auc = roc_auc(results, .data$target, .data$predprob)$.estimate) %>%
+      select(-c(.data$FN:.data$TP))
   )
 
   (
     calplot <- results %>%
-      mutate(predprob = round(predprob, digits = 2)) %>%
-      group_by(predprob) %>%
-      summarize(catches = sum(ifelse(outcome == 'Complete', 1, 0)) / n(),
+      mutate(predprob = round(.data$predprob, digits = 2)) %>%
+      group_by(.data$predprob) %>%
+      summarize(catches = sum(ifelse(.data$outcome == 'Complete', 1, 0)) / n(),
                        N = n(), .groups = 'drop') %>%
-      ggplot(aes(predprob, catches, size = N)) +
+      ggplot(aes(.data$predprob, .data$catches, size = .data$N)) +
       geom_point() +
       geom_abline(slope = 1, intercept = 0)
   )

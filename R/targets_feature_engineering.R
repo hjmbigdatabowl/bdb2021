@@ -44,8 +44,8 @@ add_receiver_target_rates <- function(df){
     group_by(.data$receiverId, .data$receiverName, .data$possessionTeam, .data$receiverPosition) %>%
     summarize(
       plays = n(),
-      targetFrequency = mean(targetFlag),
-      regressedTargets = sum(targetFlag) / sqrt(plays),  # balance between target rate, raw # of targets
+      targetFrequency = mean(.data$targetFlag),
+      regressedTargets = sum(.data$targetFlag) / sqrt(.data$plays),  # balance between target rate, raw # of targets
       .groups="keep"
     ) %>%
     ungroup()

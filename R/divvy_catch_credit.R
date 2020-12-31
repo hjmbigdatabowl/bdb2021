@@ -72,18 +72,18 @@ divvy_credit <- function(data, xgb_model, logit_model) {
 
   diffs <- new_preds %>%
     rowwise() %>%
-    mutate(across(-c(original_preds, gameId, playId), function(x) abs(min(0, original_preds - x)))) %>%
+    mutate(across(-c(.data$original_preds, .data$gameId, .data$playId), function(x) abs(min(0, .data$original_preds - x)))) %>%
     ungroup()
 
   rowsums <- diffs %>%
-    select(-c(original_preds, gameId, playId)) %>%
+    select(-c(.data$original_preds, .data$gameId, .data$playId)) %>%
     rowSums()
 
   diffs <- diffs %>%
-    mutate(across(-c(original_preds, gameId, playId), function(x) x / rowsums),
-           across(-c(original_preds, gameId, playId), function(x) ifelse(is.na(x), 1/11, x))) %>%
+    mutate(across(-c(.data$original_preds, .data$gameId, .data$playId), function(x) x / rowsums),
+           across(-c(.data$original_preds, .data$gameId, .data$playId), function(x) ifelse(is.na(x), 1/11, x))) %>%
     rename_with(function(x) glue("def_{(str_sub(x, 2L, -1L) %>% as.numeric())-3}"),
-                -c(gameId, playId, original_preds))
+                -c(.data$gameId, .data$playId, .data$original_preds))
 
   return(diffs)
 }

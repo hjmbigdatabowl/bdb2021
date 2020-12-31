@@ -62,6 +62,8 @@ get_max_throw_velo <- function(pbp) {
 #' get_target_location_at_throw returns a data frame of the locations of the targeted receiver at throw time on each play
 #' @return a data frame with the positions
 #' @param pbp a dataframe of play-by-play data
+#' @param football_data the football data
+#' @param targeted_receiver the targets data
 #' @importFrom magrittr %>%
 #' @importFrom dplyr filter mutate inner_join left_join
 #' @importFrom rlang .data
@@ -118,6 +120,7 @@ get_pi_and_sack <- function(plays) {
 #' get_play_outcomes returns a data frame of play outcomes
 #' @return a data frame with the play outcomes
 #' @param pbp the play by play data
+#' @param pi_or_sack the play result data
 #' @importFrom magrittr %>%
 #' @importFrom dplyr select filter mutate distinct inner_join case_when
 #' @importFrom rlang .data
@@ -149,18 +152,18 @@ create_throw_vectors <- function(football_data, throw_midpoint_frame_id){
       rename(x = .data$footballX, y = .data$footballY) %>%  ## TODO: will change football_data style
       pivot_wider(
         id_cols = c(.data$gameId, .data$playId),
-        names_from = frame,
+        names_from = .data$frame,
         names_glue = "{frame}_{.value}",
-        values_from = c(frameId, x, y)
+        values_from = c(.data$frameId, .data$x, .data$y)
       ) %>%
       mutate(
-        throwStartDist = sqrt((startFrameId_x - midpointFrameId_x)^2 + (startFrameId_y - midpointFrameId_y)^2),
-        throwStartTime = (midpointFrameId_frameId - startFrameId_frameId) * SECONDS_PER_FRAME,
-        throwSpeed = throwStartDist / throwStartTime,
-        throwAngle = (atan2((startFrameId_x - midpointFrameId_x), (startFrameId_y - midpointFrameId_y)) - pi/2) * 180 / pi,
-        throwAngle = ifelse(throwAngle < 0, 360 + throwAngle, throwAngle)
+        throwStartDist = sqrt((.data$startFrameId_x - .data$midpointFrameId_x)^2 + (.data$startFrameId_y - .data$midpointFrameId_y)^2),
+        throwStartTime = (.data$midpointFrameId_frameId - .data$startFrameId_frameId) * SECONDS_PER_FRAME,
+        throwSpeed = .data$throwStartDist / .data$throwStartTime,
+        throwAngle = (atan2((.data$startFrameId_x - .data$midpointFrameId_x), (.data$startFrameId_y - .data$midpointFrameId_y)) - pi/2) * 180 / pi,
+        throwAngle = ifelse(.data$throwAngle < 0, 360 + .data$throwAngle, .data$throwAngle)
       ) %>%
-      filter(!is.na(throwSpeed))
+      filter(!is.na(.data$throwSpeed))
   )
 }
 
@@ -200,39 +203,39 @@ add_throw_vector_to_positions <- function(release_positions, throw_vectors) {
       left_join(throw_vectors, by=c('gameId', 'playId')) %>%
       mutate(
         # pt0 = player, pt1 = release, pt2 = mid, https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
-        distanceToThrow = abs((x * (midpointFrameId_y - startFrameId_y)) - (y * (midpointFrameId_x - startFrameId_x)) + (midpointFrameId_x * startFrameId_y) - (midpointFrameId_y * startFrameId_x)) /  sqrt((startFrameId_x - midpointFrameId_x)^2 + (startFrameId_y - midpointFrameId_y)^2),
+        distanceToThrow = abs((.data$x * (.data$midpointFrameId_y - .data$startFrameId_y)) - (.data$y * (.data$midpointFrameId_x - .data$startFrameId_x)) + (.data$midpointFrameId_x * .data$startFrameId_y) - (.data$midpointFrameId_y * .data$startFrameId_x)) /  sqrt((.data$startFrameId_x - .data$midpointFrameId_x)^2 + (.data$startFrameId_y - .data$midpointFrameId_y)^2),
         # try moving +90 degrees, calculating how far you are from the throw vector there
-        angleToThrowPositive = throwAngle + 90,
-        interceptPositiveX = x + (distanceToThrow * cos(angleToThrowPositive * pi / 180)),
-        interceptPositiveY = y + (distanceToThrow * sin(angleToThrowPositive * pi / 180)),
+        angleToThrowPositive = .data$throwAngle + 90,
+        interceptPositiveX = .data$x + (.data$distanceToThrow * cos(.data$angleToThrowPositive * pi / 180)),
+        interceptPositiveY = .data$y + (.data$distanceToThrow * sin(.data$angleToThrowPositive * pi / 180)),
         interceptToThrowPositive = abs(
-          ((interceptPositiveX * (midpointFrameId_y - startFrameId_y))
-           - (interceptPositiveY * (midpointFrameId_x - startFrameId_x))
-           + (midpointFrameId_x * startFrameId_y)
-           - (midpointFrameId_y * startFrameId_x))
-        ) / throwStartDist,
+          ((.data$interceptPositiveX * (.data$midpointFrameId_y - .data$startFrameId_y))
+           - (.data$interceptPositiveY * (.data$midpointFrameId_x - .data$startFrameId_x))
+           + (.data$midpointFrameId_x * .data$startFrameId_y)
+           - (.data$midpointFrameId_y * .data$startFrameId_x))
+        ) / .data$throwStartDist,
         # then -90 degrees, then whichever one is smaller we take
-        angleToThrowNegative = throwAngle - 90,
-        interceptNegativeX = x + (distanceToThrow * cos(angleToThrowNegative * pi / 180)),
-        interceptNegativeY = y + (distanceToThrow * sin(angleToThrowNegative * pi / 180)),
+        angleToThrowNegative = .data$throwAngle - 90,
+        interceptNegativeX = .data$x + (.data$distanceToThrow * cos(.data$angleToThrowNegative * pi / 180)),
+        interceptNegativeY = .data$y + (.data$distanceToThrow * sin(.data$angleToThrowNegative * pi / 180)),
         interceptToThrowNegative = abs(
-          ((interceptNegativeX * (midpointFrameId_y - startFrameId_y))
-           - (interceptNegativeY * (midpointFrameId_x - startFrameId_x))
-           + (midpointFrameId_x * startFrameId_y)
-           - (midpointFrameId_y * startFrameId_x))
-        ) / throwStartDist,
+          ((.data$interceptNegativeX * (.data$midpointFrameId_y - .data$startFrameId_y))
+           - (.data$interceptNegativeY * (.data$midpointFrameId_x - .data$startFrameId_x))
+           + (.data$midpointFrameId_x * .data$startFrameId_y)
+           - (.data$midpointFrameId_y * .data$startFrameId_x))
+        ) / .data$throwStartDist,
         angleToThrow = ifelse(
-          interceptToThrowNegative >= interceptToThrowPositive,
-          angleToThrowPositive,
-          angleToThrowNegative
+          .data$interceptToThrowNegative >= .data$interceptToThrowPositive,
+          .data$angleToThrowPositive,
+          .data$angleToThrowNegative
         ),
-        interceptX = x + (distanceToThrow * sin(angleToThrow * pi / 180)),
-        interceptY = y + (distanceToThrow * cos(angleToThrow * pi / 180)),
-        interceptToThrow = abs(((interceptX * (midpointFrameId_y - startFrameId_y)) - (interceptY * (midpointFrameId_x - startFrameId_x)) + (midpointFrameId_x * startFrameId_y) - (midpointFrameId_y * startFrameId_x))) / throwStartDist,
-        releaseToIntercept = sqrt((interceptX - startFrameId_x) ^ 2 + (interceptY - startFrameId_y) ^ 2),
-        timeToIntercept = releaseToIntercept / throwSpeed,
-        veloToIntercept = distanceToThrow / timeToIntercept,
-        interceptDiff = abs(((midpointFrameId_y - startFrameId_y) * (interceptX - midpointFrameId_x)) - ((interceptY - midpointFrameId_y) * (midpointFrameId_x - startFrameId_x))),
+        interceptX = .data$x + (.data$distanceToThrow * sin(.data$angleToThrow * pi / 180)),
+        interceptY = .data$y + (.data$distanceToThrow * cos(.data$angleToThrow * pi / 180)),
+        interceptToThrow = abs(((.data$interceptX * (.data$midpointFrameId_y - .data$startFrameId_y)) - (.data$interceptY * (.data$midpointFrameId_x - .data$startFrameId_x)) + (.data$midpointFrameId_x * .data$startFrameId_y) - (.data$midpointFrameId_y * .data$startFrameId_x))) / .data$throwStartDist,
+        releaseToIntercept = sqrt((.data$interceptX - .data$startFrameId_x) ^ 2 + (.data$interceptY - .data$startFrameId_y) ^ 2),
+        timeToIntercept = .data$releaseToIntercept / .data$throwSpeed,
+        veloToIntercept = .data$distanceToThrow / .data$timeToIntercept,
+        interceptDiff = abs(((.data$midpointFrameId_y - .data$startFrameId_y) * (.data$interceptX - .data$midpointFrameId_x)) - ((.data$interceptY - .data$midpointFrameId_y) * (.data$midpointFrameId_x - .data$startFrameId_x))),
       )
   )
 }
@@ -275,11 +278,11 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
 
   ## i'll factor this out later
   receiver_skill <- pbp_data %>%
-    select(gameId, playId, nflId) %>%
+    select(.data$gameId, .data$playId, .data$nflId) %>%
     distinct() %>%
-    inner_join(targeted_receiver %>% rename(nflId = targetNflId), by = c('gameId', "playId", 'nflId')) %>%
+    inner_join(targeted_receiver %>% rename(nflId = .data$targetNflId), by = c('gameId', "playId", 'nflId')) %>%
     inner_join(play_outcomes, by = c('gameId', 'playId')) %>%
-    group_by(nflId) %>%
+    group_by(.data$nflId) %>%
     summarize(skill = sum(outcome == 'Complete') / sqrt(n()), .groups = 'drop')
 
   throw_midpoint_frame_id <- pbp_data %>%

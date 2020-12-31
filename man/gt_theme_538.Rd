@@ -10,8 +10,6 @@ gt_theme_538(data, ...)
 \item{data}{the data to use to build the table}
 
 \item{...}{other parameters}
-
-\item{xgb_model}{the xgboost model}
 }
 \value{
 list: the table in data frame form and gt form

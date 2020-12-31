@@ -8,6 +8,8 @@ get_play_outcomes(pbp, pi_or_sack)
 }
 \arguments{
 \item{pbp}{the play by play data}
+
+\item{pi_or_sack}{the play result data}
 }
 \value{
 a data frame with the play outcomes

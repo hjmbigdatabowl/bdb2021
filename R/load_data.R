@@ -19,7 +19,7 @@ read_from_data <- function(file) {
 read_non_week_files <- function() {
   files <- unzip("inst/data/nfl-big-data-bowl-2021.zip",list=TRUE) %>%
     filter(!grepl('week', .data$Name)) %>%
-    pull(Name)
+    pull(.data$Name)
 
   fnames <- str_remove(files, '.csv')
 

@@ -1,33 +1,33 @@
 #' gt_theme_538 the Fivethirtyeight GT theme
 #' @return list: the table in data frame form and gt form
 #' @param data the data to use to build the table
-#' @param xgb_model the xgboost model
 #' @param ... other parameters
 #' @importFrom magrittr %>%
 #' @import gt
+#'
 #' @export
 #'
 gt_theme_538 <- function(data,...) {
   data %>%
-    gt::opt_all_caps()  %>%
-    gt::opt_table_font(
+    opt_all_caps()  %>%
+    opt_table_font(
       font = list(
-        gt::google_font("Chivo"),
-        gt::default_fonts()
+        google_font("Chivo"),
+        default_fonts()
       )
     ) %>%
-    gt::tab_style(
-      style = gt::cell_borders(
-        sides = "bottom", color = "transparent", weight = gt::px(2)
+    tab_style(
+      style = cell_borders(
+        sides = "bottom", color = "transparent", weight = px(2)
       ),
-      locations = gt::cells_body(
+      locations = cells_body(
         columns = TRUE,
         # This is a relatively sneaky way of changing the bottom border
         # Regardless of data size
         rows = nrow(data$`_data`)
       )
     )  %>%
-    gt::tab_options(
+    tab_options(
       column_labels.background.color = "white",
       table.border.top.width = px(3),
       table.border.top.color = "transparent",
@@ -55,6 +55,8 @@ gt_theme_538 <- function(data,...) {
 #' @param show_top True sorts by the top players, False sorts by the worst
 #' @importFrom magrittr %>%
 #' @importFrom tidyr pivot_longer drop_na
+#' @importFrom stringr str_sub
+#' @importFrom scales col_numeric
 #' @import dplyr
 #' @import gt
 #' @export
@@ -70,112 +72,112 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
 
   ids <- data %>%
     left_join(credit, by = c('gameId', 'playId')) %>%
-    select(gameId, playId, nflId_def_1:nflId_def_11) %>%
-    pivot_longer(-c(gameId, playId),
+    select(.data$gameId, .data$playId, .data$nflId_def_1:.data$nflId_def_11) %>%
+    pivot_longer(-c(.data$gameId, .data$playId),
                  names_to = 'defender',
                  values_to = 'nflId') %>%
-    mutate(defender = stringr::str_sub(defender, 11L, -1L))
+    mutate(defender = str_sub(.data$defender, 11L, -1L))
 
   creds <- data %>%
     left_join(credit, by = c('gameId', 'playId')) %>%
-    select(gameId, playId, def_1:def_11) %>%
-    pivot_longer(-c(gameId, playId),
+    select(.data$gameId, .data$playId, .data$def_1:.data$def_11) %>%
+    pivot_longer(-c(.data$gameId, .data$playId),
                  names_to = 'defender',
                  values_to = 'credit') %>%
-    mutate(defender = stringr::str_sub(defender, 5L, -1L))
+    mutate(defender = str_sub(.data$defender, 5L, -1L))
 
   all_credit <- left_join(ids, creds, by = c('gameId', 'playId', 'defender'))
 
   epas <- nonweek$plays %>%
-    select(gameId, playId, epa)
+    select(.data$gameId, .data$playId, .data$epa)
 
   play_metadata <- nonweek$plays %>%
-    dplyr::left_join(nonweek$games, by = 'gameId') %>%
-    dplyr::mutate(defendingTeam = ifelse(possessionTeam == homeTeamAbbr, visitorTeamAbbr, homeTeamAbbr)) %>%
-    dplyr::select(gameId, playId, defendingTeam) %>%
-    dplyr::distinct()
+    left_join(nonweek$games, by = 'gameId') %>%
+    mutate(defendingTeam = ifelse(.data$possessionTeam == .data$homeTeamAbbr, .data$visitorTeamAbbr, .data$homeTeamAbbr)) %>%
+    select(.data$gameId, .data$playId, .data$defendingTeam) %>%
+    distinct()
 
   defender_teams <- data %>%
-    dplyr::select(gameId, playId, nflId_def_1:nflId_def_11) %>%
-    tidyr::pivot_longer(cols = c(nflId_def_1:nflId_def_11), names_to = "pos", values_to = 'nflId') %>%
-    dplyr::select(gameId, playId, nflId) %>%
-    dplyr::distinct() %>%
-    dplyr::left_join(play_metadata, by = c('playId', 'gameId')) %>%
-    dplyr::select(nflId, defendingTeam) %>%
-    dplyr:: distinct() %>%
-    dplyr::rename(team = defendingTeam)
+    select(.data$gameId, .data$playId, .data$nflId_def_1:.data$nflId_def_11) %>%
+    pivot_longer(cols = c(.data$nflId_def_1:.data$nflId_def_11), names_to = "pos", values_to = 'nflId') %>%
+    select(.data$gameId, .data$playId, .data$nflId) %>%
+    distinct() %>%
+    left_join(play_metadata, by = c('playId', 'gameId')) %>%
+    select(.data$nflId, .data$defendingTeam) %>%
+    distinct() %>%
+    rename(team = .data$defendingTeam)
 
   results <- data %>%
-    dplyr::mutate(preds = preds,
-                  numeric_outcome = ifelse(outcome == 'Complete', 1, 0),
-                  marginal = numeric_outcome - preds) %>%
-    select(gameId, playId, marginal, nflId_def_1:nflId_def_11) %>%
-    pivot_longer(cols = -c(gameId, playId, marginal),
+    mutate(preds = .data$preds,
+           numeric_outcome = ifelse(.data$outcome == 'Complete', 1, 0),
+           marginal = .data$numeric_outcome - .data$preds) %>%
+    select(.data$gameId, .data$playId, .data$marginal, .data$nflId_def_1:.data$nflId_def_11) %>%
+    pivot_longer(cols = -c(.data$gameId, .data$playId, .data$marginal),
                  names_to = 'defender',
                  values_to = 'nflId') %>%
-    select(-nflId) %>%
-    mutate(defender = stringr::str_sub(defender, 11L, -1L)) %>%
+    select(-.data$nflId) %>%
+    mutate(defender = str_sub(.data$defender, 11L, -1L)) %>%
     left_join(all_credit, by = c('gameId', 'playId', 'defender')) %>%
     left_join(epas, by = c('gameId', 'playId')) %>%
     distinct() %>%
-    drop_na(nflId) %>%
-    mutate(drops_added = credit * marginal) %>%
-    dplyr::group_by(nflId) %>%
-    dplyr::summarize(drops_added = sum(drops_added),
-                     epa_added = sum(epa),
-                     plays = dplyr::n(), .groups = 'drop') %>%
-    dplyr::mutate(drops_perplay = drops_added / plays,
-                  epa_perplay = epa_added / plays) %>%
-    dplyr::left_join(nonweek$players, by = c('nflId' = 'nflId')) %>%
-    dplyr::arrange(desc(epa_perplay)) %>%
-    dplyr::select(nflId, displayName, position, plays, drops_added, drops_perplay)
+    drop_na(.data$nflId) %>%
+    mutate(drops_added = .data$credit * .data$marginal) %>%
+    group_by(.data$nflId) %>%
+    summarize(drops_added = sum(.data$drops_added),
+                     epa_added = sum(.data$epa),
+                     plays = n(), .groups = 'drop') %>%
+    mutate(drops_perplay = .data$drops_added / .data$plays,
+                  epa_perplay = .data$epa_added / .data$plays) %>%
+    left_join(nonweek$players, by = c('nflId' = 'nflId')) %>%
+    arrange(desc(.data$epa_perplay)) %>%
+    select(.data$nflId, .data$displayName, .data$position, .data$plays, .data$drops_added, .data$drops_perplay)
 
   arrange_by <- function(data, show_top = show_top) {
     if (show_top) {
-      dplyr::arrange(data, rank)
+      arrange(data, rank)
     } else {
-      dplyr::arrange(data, dplyr::desc(rank))
+      arrange(data, desc(rank))
     }
   }
 
   tab <- results %>%
-    dplyr::filter(plays > playcutoff) %>%
-    dplyr::left_join(defender_teams, by = 'nflId') %>%
-    dplyr::left_join(
-      teams_colors_logos %>% dplyr::select(team_abbr, team_logo_espn),
+    filter(.data$plays > .data$playcutoff) %>%
+    left_join(defender_teams, by = 'nflId') %>%
+    left_join(
+      teams_colors_logos %>% select(.data$team_abbr, .data$team_logo_espn),
       by = c("team" = "team_abbr")
     ) %>%
-    dplyr::group_by(nflId) %>%
-    dplyr::filter(row_number() == 1L,
-                  position %in% c('CB', 'S', 'FS', 'SS')) %>%
-    dplyr::ungroup() %>%
-    dplyr::arrange(desc(drops_added)) %>%
-    dplyr::mutate(rank=row_number()) %>%
-    dplyr::select(rank, position, displayName, team_logo_espn, plays, drops_added, drops_perplay) %>%
+    group_by(.data$nflId) %>%
+    filter(row_number() == 1L,
+           .data$position %in% c('CB', 'S', 'FS', 'SS')) %>%
+    ungroup() %>%
+    arrange(desc(.data$drops_added)) %>%
+    mutate(rank=row_number()) %>%
+    select(.data$rank, .data$position, .data$displayName, .data$team_logo_espn, .data$plays, .data$drops_added, .data$drops_perplay) %>%
     arrange_by(show_top) %>%
     head(num) %>%
-    gt::gt() %>%
-    gt::text_transform(
-      locations = gt::cells_body(vars(team_logo_espn)),
+    gt() %>%
+    text_transform(
+      locations = cells_body(vars(.data$team_logo_espn)),
       fn = function(x) {
-        gt::web_image(
+        web_image(
           url = x,
           height = 40
         )
       }
     ) %>%
-    gt::fmt_number(
-      columns = vars(drops_added, drops_perplay),
+    fmt_number(
+      columns = vars(.data$drops_added, .data$drops_perplay),
       decimals = 2
     ) %>%
-    gt::data_color(
-      columns = vars(drops_added),
-      colors = scales::col_numeric(
+    data_color(
+      columns = vars(.data$drops_added),
+      colors = col_numeric(
         palette = c("red", "white", "blue"),
         domain = c(-29, 29)
       )
     ) %>%
-    gt::cols_label(
+    cols_label(
       position = 'POS',
       displayName = 'Name',
       team_logo_espn = 'logo',
@@ -185,12 +187,27 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
     ) %>%
     gt_theme_538()
 
-  gt::gtsave(tab, 'catch_prob_rankings.png', path = 'tables')
+  gtsave(tab, 'catch_prob_rankings.png', path = 'inst/tables')
 
   return(list(results = results,
               table = tab))
 }
 
+#' make_tendency_table makes the deterrence table
+#' @return list: the table in data frame form and gt form
+#' @param data the data to use to build the table
+#' @param xgb_model the xgboost model
+#' @param logit_model the logit model for platt scaling
+#' @param num the number of players to include in the table (default: 1000)
+#' @param playcutoff the min number of plays (default: 300)
+#' @param show_top True sorts by the top players, False sorts by the worst
+#' @importFrom magrittr %>%
+#' @importFrom tidyr pivot_longer drop_na
+#' @importFrom stringr str_sub
+#' @import dplyr
+#' @import gt
+#' @export
+#'
 make_tendency_table <- function(data, model) {
 
   # bin_pred <- predict(target_mod_bin, newdata = tendency_plays[test_idx,], type='response')
@@ -332,7 +349,7 @@ make_tendency_table <- function(data, model) {
     ) %>%
     data_color(
       columns = vars(targets_added),
-      colors = scales::col_numeric(
+      colors = col_numeric(
         palette = c("red", "white", "blue"),
         domain = c(-29, 29)
       )
