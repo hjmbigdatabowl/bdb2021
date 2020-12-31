@@ -23,12 +23,11 @@ tune_catch_prob_xgb <- function(data) {
 
   ncores <- as.integer(ncores)
 
-  if(is.na(ncores)){
+  if (is.na(ncores)){
     stop("Error: Improper number of cores provided. Please provide an integer greater than or equal to 1.")
-  } else if(ncores > parallel::detectCores()){
+  } else if (ncores > parallel::detectCores()){
     stop("Error: Number of cores specified exceeds number of cores available on this machine. Please specify an integer between 1 and the value output by parallel::detectCores().")
-  }
-  else if(ncores == parallel::detectCores()){
+  } else if (ncores == parallel::detectCores()) {
     askYesNo("Warning: Number of cores provided is equal to the number of cores detected on this machine. This may impact performance for other programs on your computer. Do you wish to proceed?")
   }
 
@@ -94,7 +93,7 @@ tune_catch_prob_xgb <- function(data) {
   )
 
   best_auc <- select_best(xgb_res, "roc_auc")
-  save(xgb_spec, xgb_res, xgb_wf, best_auc, data_folds, file = 'models/catch_prob_xgb_xval.Rdata')
+  save(xgb_spec, xgb_res, xgb_wf, best_auc, data_folds, file = 'inst/models/catch_prob_xgb_xval.Rdata')
   return(list(data = data,
               data_split = data_split,
               workflow = xgb_wf,
@@ -192,7 +191,7 @@ tune_target_prob_rf <- function(data) {
   )
 
   best_auc <- select_best(rf_res, "roc_auc")
-  save(rf_spec, rf_res, rf_wf, best_auc, data_folds, file = 'models/target_prob_rf_xval.Rdata')
+  save(rf_spec, rf_res, rf_wf, best_auc, data_folds, file = 'inst/models/target_prob_rf_xval.Rdata')
   return(list(data = data,
               data_split = data_split,
               workflow = rf_wf,

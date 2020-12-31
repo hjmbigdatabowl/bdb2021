@@ -20,7 +20,7 @@ fit_catch_prob_xgb <- function(workflow, pars, data_split, data) {
 
   final_res <- tune::last_fit(final_xgb, data_split)
 
-  save(final_xgb, final_res, file = "models/catch_prob_xgb.Rdata")
+  save(final_xgb, final_res, file = "inst/models/catch_prob_xgb.Rdata")
 
   return(list(final_xgb = final_xgb,
               final_res = final_res))
@@ -39,17 +39,17 @@ fit_catch_prob_xgb <- function(workflow, pars, data_split, data) {
 #' @export
 #'
 fit_target_prob_rf <- function(workflow, pars, data_split, data) {
-  
+
   final_rf <- tune::finalize_workflow(
     workflow,
     pars
   ) %>%
     parsnip::fit(data)
-  
+
   final_res <- tune::last_fit(final_rf, data_split)
-  
-  save(final_rf, final_res, file = "models/target_prob_rf.Rdata")
-  
+
+  save(final_rf, final_res, file = "inst/models/target_prob_rf.Rdata")
+
   return(list(final_rf = final_rf,
               final_res = final_res))
 }
@@ -115,7 +115,7 @@ stepwise_catch_prob_predict <- function(data, rf_model, logit_model) {
   preds <- data %>%
     mutate(predprob = predict.model_fit(rf_model, .data, type = 'prob')$.pred_Complete,
            calibratedprob = predict.model_fit(logit_model, .data, type = 'prob')$.pred_Complete)
-  
+
   return(preds$calibratedprob)
 }
 
