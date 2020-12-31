@@ -13,6 +13,7 @@
 #' @importFrom workflows workflow add_recipe add_model
 #' @importFrom yardstick roc_auc  f_meas kap accuracy bal_accuracy metric_set
 #' @importFrom doParallel registerDoParallel
+#' @importFrom utils askYesNo
 #' @import dials
 #' @export
 #'

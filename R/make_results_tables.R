@@ -57,6 +57,7 @@ gt_theme_538 <- function(data,...) {
 #' @importFrom tidyr pivot_longer drop_na
 #' @importFrom stringr str_sub
 #' @importFrom scales col_numeric
+#' @importFrom utils head
 #' @import dplyr
 #' @import gt
 #' @export
@@ -204,6 +205,7 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
 #' @importFrom magrittr %>%
 #' @importFrom tidyr pivot_longer drop_na
 #' @importFrom stringr str_sub
+#' @importFrom utils View
 #' @import dplyr
 #' @import gt
 #' @export
