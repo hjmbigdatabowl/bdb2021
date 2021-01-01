@@ -19,6 +19,7 @@
 #' @import dplyr
 #' @export
 catch_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model) {
+  . <- NULL
   preds <- train %>%
     mutate(target = as.factor(.data$outcome),
            calibratedprob = stepwise_catch_prob_predict(., xgb_model, logit_model))
@@ -84,7 +85,7 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model) {
 
   (
     calplot <- results %>%
-      mutate(predprob = round(.data$predprob, digits = 2)) %>%
+      mutate(predprob = round(.data$predprob * 20, digits = 0) / 20) %>%
       group_by(.data$predprob) %>%
       summarize(catches = sum(ifelse(.data$outcome == 'Complete', 1, 0)) / n(),
                        N = n(), .groups = 'drop') %>%

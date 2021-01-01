@@ -18,6 +18,7 @@
 #' @export
 #'
 tune_catch_prob_xgb <- function(data) {
+  where <- NULL
   ncores <- showPrompt(
     title = "Cores", message = "How many cores do you want to use? Use parallel::detectCores() to see how many cores are available.", default = 4
   )
@@ -123,6 +124,8 @@ tune_catch_prob_xgb <- function(data) {
 #' @export
 #'
 tune_target_prob_rf <- function(data) {
+  where <- NULL
+
   ncores <- showPrompt(
     title = "Cores", message = "How many cores do you want to use? Use parallel::detectCores() to see how many cores are available.", default = 4
   )

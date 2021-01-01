@@ -176,6 +176,7 @@ create_throw_vectors <- function(football_data, throw_midpoint_frame_id){
 #' @importFrom rlang .data
 #'
 get_defense_locs_at_throw <- function(player_locs_at_throw, throw_vectors) {
+  . <- NULL
   DEFENSE_POSITIONS <- get_constants('defense_positions')
 
   player_locs_at_throw %>%
@@ -255,7 +256,7 @@ add_throw_vector_to_positions <- function(release_positions, throw_vectors) {
 #' @export
 #'
 do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
-
+  . <- NULL
   nonweek <- read_non_week_files()
   targeted_receiver <- get_targeted_receiver()
 
@@ -283,7 +284,7 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
     inner_join(targeted_receiver %>% rename(nflId = .data$targetNflId), by = c('gameId', "playId", 'nflId')) %>%
     inner_join(play_outcomes, by = c('gameId', 'playId')) %>%
     group_by(.data$nflId) %>%
-    summarize(skill = sum(outcome == 'Complete') / sqrt(n()), .groups = 'drop')
+    summarize(skill = sum(.data$outcome == 'Complete') / sqrt(n()), .groups = 'drop')
 
   throw_midpoint_frame_id <- pbp_data %>%
     filter(.data$event %in% c(THROW_END_EVENTS, THROW_START_EVENTS),

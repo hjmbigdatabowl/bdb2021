@@ -69,7 +69,7 @@ fit_target_prob_rf <- function(workflow, pars, data_split, data) {
 #' @export
 #'
 fit_logit_platt_scaler <- function(model, data) {
-
+  . <- NULL
   preds <- data %>%
     mutate(predprob = predict(model, ., type = 'prob')$.pred_Complete,
            target = as.factor(.data$outcome))
@@ -95,6 +95,7 @@ fit_logit_platt_scaler <- function(model, data) {
 #' @export
 #'
 stepwise_catch_prob_predict <- function(data, xgb_model, logit_model) {
+  . <- NULL
   preds <- data %>%
     mutate(predprob = predict(xgb_model, ., type = 'prob')$.pred_Complete) %>%
     mutate(calibratedprob = predict(logit_model, ., type = 'prob')$.pred_Complete)
