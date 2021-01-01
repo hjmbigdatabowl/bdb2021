@@ -9,15 +9,7 @@ make_tendency_table(data, model)
 \arguments{
 \item{data}{the data to use to build the table}
 
-\item{xgb_model}{the xgboost model}
-
-\item{logit_model}{the logit model for platt scaling}
-
-\item{num}{the number of players to include in the table (default: 1000)}
-
-\item{playcutoff}{the min number of plays (default: 300)}
-
-\item{show_top}{True sorts by the top players, False sorts by the worst}
+\item{model}{the model}
 }
 \value{
 list: the table in data frame form and gt form
