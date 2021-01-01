@@ -57,16 +57,17 @@ gt_theme_538 <- function(data,...) {
 #' @importFrom tidyr pivot_longer drop_na
 #' @importFrom stringr str_sub
 #' @importFrom scales col_numeric
-#' @importFrom utils head
+#' @importFrom utils head data
+#' @import nflfastR
 #' @import dplyr
 #' @import gt
 #' @export
 #'
 make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, playcutoff = 300, show_top = TRUE) {
+  teams_colors_logos <- NULL
 
   preds <- stepwise_catch_prob_predict(data, xgb_model, logit_model)
-
-  teams_colors_logos <- nflfastR::teams_colors_logos
+  data('teams_colors_logos', envir = environment())
   nonweek <- read_non_week_files()
 
   credit <- divvy_credit(data, xgb_model, logit_model)
@@ -201,16 +202,18 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
 #' @importFrom magrittr %>%
 #' @importFrom tidyr pivot_longer drop_na
 #' @importFrom stringr str_sub
-#' @importFrom utils View
+#' @importFrom utils View data
+#' @import nflfastR
 #' @import dplyr
 #' @import gt
 #' @export
 #'
 make_tendency_table <- function(data, model) {
+  teams_colors_logos <- NULL
 
   nonweek_data <- read_non_week_files()
   players <- nonweek_data$players
-  teams_colors_logos <- nflfastR::teams_colors_logos
+  data('teams_colors_logos', envir = environent())
 
   # bin_pred <- predict(target_mod_bin, newdata = tendency_plays[test_idx,], type='response')
   pos_pred <- predict(model, data, type="prob")$.pred_1
