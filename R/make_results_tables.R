@@ -213,7 +213,7 @@ make_tendency_table <- function(data, model) {
 
   nonweek_data <- read_non_week_files()
   players <- nonweek_data$players
-  data('teams_colors_logos', envir = environent())
+  data('teams_colors_logos', envir = environment())
 
   # bin_pred <- predict(target_mod_bin, newdata = tendency_plays[test_idx,], type='response')
   pos_pred <- predict(model, data, type="prob")$.pred_1
