@@ -2,10 +2,14 @@ Package: bdb2021
 Title: Our Big Data Bowl 2021 Submission
 Version: 1.0.0
 Authors@R: 
-    person(given = "Matt",
-           family = "Kaye",
-           role = c("aut", "cre"),
-           email = "mrkaye97@gmail.com")
+    c(person(given = "Matt",
+		     family = "Kaye",
+		     role = c("aut", "cre"),
+		     email = "mrkaye97@gmail.com"),
+	  person(given = "Hugh",
+	  		 family = "McCreery",
+	  		 role = c("aut"),
+	  		 email = "hugh.mccreery@gmail.com"))
 Description: This package houses all of the code behind our 2021 Big Data Bowl submission. It relies on the data from the Kaggle competition, which can be found on the Kaggle site.
 License: MIT + file LICENSE
 Encoding: UTF-8

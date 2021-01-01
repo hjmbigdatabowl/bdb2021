@@ -11,6 +11,7 @@
 #' @importFrom glue glue
 #'
 recalc_prob <- function(defender_to_remove, data, xgb_model, logit_model) {
+  . <- NULL
 
   data <- data %>%
     mutate(calibratedpreds = stepwise_catch_prob_predict(., xgb_model, logit_model))

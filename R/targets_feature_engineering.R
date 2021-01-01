@@ -87,7 +87,7 @@ do_target_prob_feature_eng <- function(weeks_to_use = 1:17){
   THROW_START_EVENTS <- get_constants("throw_start_events")
 
   weather <- build_weather_df(weeks_to_use) %>%
-    mutate(gameId = as.character(gameId))
+    mutate(gameId = as.character(.data$gameId))
 
   # get position data, make changes to coordinate system to have all plays go in one direction
   plays <- weeks_to_use %>%
@@ -102,8 +102,8 @@ do_target_prob_feature_eng <- function(weeks_to_use = 1:17){
     filter(.data$pass_attempt == 1) %>%
     mutate(gameId = as.character(.data$old_game_id),
            playId = as.character(.data$play_id)) %>%
-    select(gameId,
-           playId,
+    select(.data$gameId,
+           .data$playId,
            pbpReceiverName = .data$receiver,
            halfSecondsRemaining = .data$half_seconds_remaining,
            scoreDifferential = .data$score_differential) %>%
@@ -179,15 +179,15 @@ do_target_prob_feature_eng <- function(weeks_to_use = 1:17){
            targetFlag = as.numeric(.data$receiverName == .data$pbpReceiverName),
            defDistance = sqrt((.data$receiverX - .data$defX)**2 + (.data$receiverY - .data$defY)**2)) %>%
     group_by(.data$gameId, .data$playId, .data$receiverId) %>%
-    arrange(defDistance) %>%
+    arrange(.data$defDistance) %>%
     mutate(defPlayId = 1:n()) %>%
-    filter(defPlayId <= 3) %>%
+    filter(.data$defPlayId <= 3) %>%
     ungroup() %>%
     pivot_wider(names_from=.data$defPlayId,
                 values_from=c(.data$defX, .data$defY, .data$defId, .data$defPosition, .data$defDistance),
                 names_sep='') %>%
     group_by(.data$gameId, .data$playId) %>%
-    arrange(-defDistance1) %>%
+    arrange(-.data$defDistance1) %>%
     mutate(minDefDistancePlay = min(.data$defDistance1),
            maxDefDistancePlay = max(.data$defDistance1),
            playOpenRank = 1:n()) %>%

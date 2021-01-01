@@ -9,7 +9,7 @@
 #' @importFrom rlang .data
 #' @importFrom rsample initial_split training testing vfold_cv
 #' @importFrom tune tune tune_bayes control_bayes select_best
-#' @importFrom recipes recipe step_other step_dummy all_outcomes all_nominal
+#' @importFrom recipes recipe step_other step_dummy all_outcomes all_nominal all_numeric
 #' @importFrom workflows workflow add_recipe add_model
 #' @importFrom yardstick roc_auc  f_meas kap accuracy bal_accuracy metric_set
 #' @importFrom doParallel registerDoParallel
@@ -114,7 +114,7 @@ tune_catch_prob_xgb <- function(data) {
 #' @importFrom rlang .data
 #' @importFrom rsample initial_split training testing vfold_cv
 #' @importFrom tune tune tune_bayes control_bayes select_best
-#' @importFrom recipes recipe step_other step_dummy step_knnimpute all_outcomes all_nominal
+#' @importFrom recipes recipe step_other step_dummy step_knnimpute step_mutate all_outcomes all_nominal
 #' @importFrom workflows workflow add_recipe add_model
 #' @importFrom yardstick roc_auc  f_meas kap accuracy bal_accuracy metric_set
 #' @importFrom doParallel registerDoParallel
@@ -146,7 +146,7 @@ tune_target_prob_rf <- function(data) {
            .data$targetFlag) %>%
     mutate(across(where(is.character), as.factor))
 
-  data_split <- initial_split(data, strata = targetFlag)
+  data_split <- initial_split(data, strata = .data$targetFlag)
   data_train <- training(data_split)
   data_test <- testing(data_split)
 
@@ -165,17 +165,17 @@ tune_target_prob_rf <- function(data) {
   )
 
   prep_rec <-
-    recipe(formula = targetFlag ~., data = data_train) %>%
+    recipe(formula = .data$targetFlag ~., data = data_train) %>%
     step_other(all_nominal(), -all_outcomes(), threshold = 0.01) %>%
     step_dummy(all_nominal(),-all_outcomes()) %>%
     step_knnimpute(all_numeric(),-all_outcomes()) %>%
-    step_mutate(targetFlag = as.factor(targetFlag))
+    step_mutate(targetFlag = as.factor(.data$targetFlag))
 
   rf_wf <- workflow() %>%
     add_recipe(prep_rec) %>%
     add_model(rf_spec)
 
-  data_folds <- vfold_cv(data_train, strata = targetFlag)
+  data_folds <- vfold_cv(data_train, strata = .data$targetFlag)
   registerDoParallel(cores = ncores)
 
   rf_res <- tune_bayes(
