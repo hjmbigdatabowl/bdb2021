@@ -220,10 +220,14 @@ tune_target_prob_rf <- function(data) {
 #' @importFrom workflows workflow add_recipe add_model
 #' @importFrom yardstick roc_auc  f_meas kap accuracy bal_accuracy metric_set
 #' @importFrom doParallel registerDoParallel
+#' @importFrom rstudioapi showPrompt
+#' @importFrom parallel detectCores
 #' @import dials
 #' @export
 tune_target_prob_xgb <- function(data) {
-  ncores <- rstudioapi::showPrompt(
+  utils::globalVariables("where")
+
+  ncores <- showPrompt(
     title = "Cores", message = "How many cores do you want to use? Use parallel::detectCores() to see how many cores are available.", default = 4
   )
 
@@ -231,10 +235,10 @@ tune_target_prob_xgb <- function(data) {
 
   if(is.na(ncores)){
     stop("Error: Improper number of cores provided. Please provide an integer greater than or equal to 1.")
-  } else if(ncores > parallel::detectCores()){
+  } else if(ncores > detectCores()){
     stop("Error: Number of cores specified exceeds number of cores available on this machine. Please specify an integer between 1 and the value output by parallel::detectCores().")
   }
-  else if(ncores == parallel::detectCores()){
+  else if(ncores == detectCores()){
     askYesNo("Warning: Number of cores provided is equal to the number of cores detected on this machine. This may impact performance for other programs on your computer. Do you wish to proceed?")
   }
 
@@ -246,7 +250,7 @@ tune_target_prob_xgb <- function(data) {
     mutate(across(where(is.character), as.factor),
            targetFlag = as.factor(.data$targetFlag))
 
-  data_split <- initial_split(data, strata = targetFlag)
+  data_split <- initial_split(data, strata = .data$targetFlag)
   data_train <- training(data_split)
   data_test <- testing(data_split)
 
@@ -272,7 +276,7 @@ tune_target_prob_xgb <- function(data) {
     finalize(mtry(), data_train)
   )
 
-  prep_rec <- recipe(formula = targetFlag ~., data = data_train) %>%
+  prep_rec <- recipe(formula = .data$targetFlag ~., data = data_train) %>%
     step_other(all_nominal(), -all_outcomes(), threshold = 0.01) %>%
     step_dummy(all_nominal(),-all_outcomes()) %>%
     step_knnimpute(all_numeric(),-all_outcomes())
@@ -281,7 +285,7 @@ tune_target_prob_xgb <- function(data) {
     add_recipe(prep_rec) %>%
     add_model(xgb_spec)
 
-  data_folds <- vfold_cv(data_train, strata = targetFlag)
+  data_folds <- vfold_cv(data_train, strata = .data$targetFlag)
 
   registerDoParallel(cores = ncores)
   xgb_res <- tune_bayes(
