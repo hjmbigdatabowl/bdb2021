@@ -21,7 +21,7 @@
 catch_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model) {
   preds <- train %>%
     mutate(target = as.factor(.data$outcome),
-           calibratedprob = stepwise_catch_prob_predict(.data, xgb_model, logit_model))
+           calibratedprob = stepwise_catch_prob_predict(., xgb_model, logit_model))
 
   (
     roc_plot <- preds %>%
@@ -50,7 +50,7 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model) {
 
   results <- test %>%
     mutate(target = as.factor(.data$outcome),
-                  predprob = stepwise_catch_prob_predict(.data, xgb_model, logit_model),
+                  predprob = stepwise_catch_prob_predict(., xgb_model, logit_model),
                   pred_outcome = ifelse(.data$predprob > THRESHOLD_TO_USE, 'Complete', 'Incomplete'))
 
   jpeg("inst/plots/cdplot.jpg", width = 350, height = 300)

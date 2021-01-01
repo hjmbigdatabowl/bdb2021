@@ -109,7 +109,7 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
     rename(team = .data$defendingTeam)
 
   results <- data %>%
-    mutate(preds = .data$preds,
+    mutate(preds = preds,
            numeric_outcome = ifelse(.data$outcome == 'Complete', 1, 0),
            marginal = .data$numeric_outcome - .data$preds) %>%
     select(.data$gameId, .data$playId, .data$marginal, .data$nflId_def_1:.data$nflId_def_11) %>%
@@ -142,7 +142,7 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
   }
 
   tab <- results %>%
-    filter(.data$plays > .data$playcutoff) %>%
+    filter(.data$plays > playcutoff) %>%
     left_join(defender_teams, by = 'nflId') %>%
     left_join(
       teams_colors_logos %>% select(.data$team_abbr, .data$team_logo_espn),
@@ -159,7 +159,7 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
     head(num) %>%
     gt() %>%
     text_transform(
-      locations = cells_body(vars(.data$team_logo_espn)),
+      locations = cells_body(vars('team_logo_espn')),
       fn = function(x) {
         web_image(
           url = x,
@@ -168,11 +168,11 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
       }
     ) %>%
     fmt_number(
-      columns = vars(.data$drops_added, .data$drops_perplay),
+      columns = vars('drops_added', 'drops_perplay'),
       decimals = 2
     ) %>%
     data_color(
-      columns = vars(.data$drops_added),
+      columns = vars('drops_added'),
       colors = col_numeric(
         palette = c("red", "white", "blue"),
         domain = c(-29, 29)
