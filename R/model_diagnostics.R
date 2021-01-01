@@ -24,19 +24,6 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model) {
     mutate(target = as.factor(.data$outcome),
            calibratedprob = stepwise_catch_prob_predict(., xgb_model, logit_model))
 
-  (
-    roc_plot <- preds %>%
-      threshold_perf(.data$target, .data$calibratedprob, thresholds = seq(0, 1, by = .01)) %>%
-      pivot_wider(id_cols = .data$.threshold, names_from = .data$.metric, values_from = .data$.estimate) %>%
-      ggplot(aes(x = (1-.data$spec), y = .data$sens)) +
-      geom_point(aes(color = .data$.threshold)) +
-      geom_line() +
-      geom_abline(slope = 1, intercept = 0) +
-      labs(x = 'FPR', y = 'TPR') +
-      lims(x = c(0,1), y = c(0,1))
-  )
-
-
   preds %>%
     threshold_perf(.data$target, .data$calibratedprob, thresholds = seq(.05, .95, by = .01)) %>%
     pivot_wider(id_cols = .data$.threshold, names_from = .data$.metric, values_from = .data$.estimate) %>%
@@ -51,8 +38,21 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model) {
 
   results <- test %>%
     mutate(target = as.factor(.data$outcome),
-                  predprob = stepwise_catch_prob_predict(., xgb_model, logit_model),
-                  pred_outcome = ifelse(.data$predprob > THRESHOLD_TO_USE, 'Complete', 'Incomplete'))
+           predprob = stepwise_catch_prob_predict(., xgb_model, logit_model),
+           pred_outcome = ifelse(.data$predprob > THRESHOLD_TO_USE, 'Complete', 'Incomplete'))
+
+  (
+    roc_plot <- results %>%
+      threshold_perf(.data$target, .data$predprob, thresholds = seq(0, 1, by = .01)) %>%
+      pivot_wider(id_cols = .data$.threshold, names_from = .data$.metric, values_from = .data$.estimate) %>%
+      ggplot(aes(x = (1-.data$spec), y = .data$sens)) +
+      geom_point(aes(color = .data$.threshold)) +
+      geom_line() +
+      geom_abline(slope = 1, intercept = 0) +
+      labs(x = 'FPR', y = 'TPR') +
+      lims(x = c(0,1), y = c(0,1))
+  )
+
 
   jpeg("inst/plots/cdplot.jpg", width = 350, height = 300)
   cdplot(results$predprob, as.factor(results$target))

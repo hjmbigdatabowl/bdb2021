@@ -386,7 +386,8 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
     left_join(weather, by = 'gameId') %>%
     left_join(football_locations_at_arrival, by = c('gameId', 'playId')) %>%
     left_join(target_position_at_throw, by = c('gameId', 'playId')) %>%
-    left_join(receiver_skill, by = c('targetNflId' = 'nflId'))
+    left_join(receiver_skill, by = c('targetNflId' = 'nflId')) %>%
+    left_join(nonweek$players %>% select(.data$nflId, .data$height))
 
   return(df)
 }

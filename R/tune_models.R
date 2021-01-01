@@ -36,7 +36,7 @@ tune_catch_prob_xgb <- function(data) {
   data <- data %>%
     select(.data$dist_to_def_1:.data$veloToIntercept_def_11, .data$max_throw_velo, .data$throwdist,
            .data$numberOfPassRushers, .data$targetXThrow, .data$targetYThrow, .data$footballXArr, .data$footballYArr,
-           .data$conditions, .data$temperature, .data$targetSThrow, .data$targetAThrow, .data$skill, .data$outcome) %>%
+           .data$conditions, .data$temperature, .data$targetSThrow, .data$targetAThrow, .data$skill, .data$height, .data$outcome) %>%
     mutate(across(where(is.character), as.factor))
 
   data_split <- initial_split(data, strata = .data$outcome)
@@ -81,9 +81,9 @@ tune_catch_prob_xgb <- function(data) {
     resamples = data_folds,
     param_info = xgb_params,
     iter = 500,
-    metrics = metric_set(roc_auc,
+    metrics = metric_set(f_meas,
+                         roc_auc,
                          bal_accuracy,
-                         f_meas,
                          accuracy,
                          kap),
     initial = 20,
@@ -94,7 +94,7 @@ tune_catch_prob_xgb <- function(data) {
                                   verbose = T)
   )
 
-  best_auc <- select_best(xgb_res, "roc_auc")
+  best_auc <- select_best(xgb_res, "f_meas")
   save(xgb_spec, xgb_res, xgb_wf, best_auc, data_folds, file = 'inst/models/catch_prob_xgb_xval.Rdata')
   return(list(data = data,
               data_split = data_split,

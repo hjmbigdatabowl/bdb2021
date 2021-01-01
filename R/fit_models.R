@@ -119,8 +119,8 @@ stepwise_catch_prob_predict <- function(data, xgb_model, logit_model) {
 stepwise_target_prob_predict <- function(data, rf_model, logit_model) {
   . <- NULL
   preds <- data %>%
-    mutate(predprob = predict(rf_model, ., type = 'prob')$.pred_Complete,
-           calibratedprob = predict(logit_model, ., type = 'prob')$.pred_Complete)
+    mutate(predprob = predict(rf_model, ., type = 'prob')$.pred_Complete) %>%
+    mutate(calibratedprob = predict(logit_model, ., type = 'prob')$.pred_Complete)
 
   return(preds$calibratedprob)
 }

@@ -197,11 +197,7 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
 #' make_tendency_table makes the deterrence table
 #' @return list: the table in data frame form and gt form
 #' @param data the data to use to build the table
-#' @param xgb_model the xgboost model
-#' @param logit_model the logit model for platt scaling
-#' @param num the number of players to include in the table (default: 1000)
-#' @param playcutoff the min number of plays (default: 300)
-#' @param show_top True sorts by the top players, False sorts by the worst
+#' @param model the model
 #' @importFrom magrittr %>%
 #' @importFrom tidyr pivot_longer drop_na
 #' @importFrom stringr str_sub
