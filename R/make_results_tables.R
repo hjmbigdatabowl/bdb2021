@@ -337,7 +337,7 @@ make_tendency_table <- function(data, model) {
     head(20) %>%
     gt() %>%
     text_transform(
-      locations = cells_body(vars(team_logo_espn)),
+      locations = cells_body(vars('team_logo_espn')),
       fn = function(x) {
         web_image(
           url = x,
@@ -346,7 +346,7 @@ make_tendency_table <- function(data, model) {
       }
     ) %>%
     fmt_number(
-      columns = vars(expected_targets, targets_added),
+      columns = vars('expected_targets', 'targets_added'),
       decimals = 0
     ) %>%
     data_color(

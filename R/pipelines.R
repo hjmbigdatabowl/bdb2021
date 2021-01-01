@@ -13,7 +13,7 @@ run_catch_prob_tuning_pipeline <- function() {
   test <- df %>%
     setdiff(train)
 
-#  catch_prob_tuning_results <- tune_catch_prob_xgb(train)
+  catch_prob_tuning_results <- tune_catch_prob_xgb(train)
   catch_prob_model <- fit_catch_prob_xgb(workflow = catch_prob_tuning_results$workflow,
                                          pars = catch_prob_tuning_results$parameters,
                                          data_split = catch_prob_tuning_results$data_split,
