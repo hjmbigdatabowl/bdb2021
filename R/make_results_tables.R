@@ -66,7 +66,7 @@ gt_theme_538 <- function(data,...) {
 make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, playcutoff = 300, show_top = TRUE) {
   teams_colors_logos <- NULL
 
-  preds <- stepwise_catch_prob_predict(data, xgb_model, logit_model)
+  preds <- predict(xgb_model, data, type = 'prob')$.pred_Complete
   data('teams_colors_logos', envir = environment())
   nonweek <- read_non_week_files()
 
