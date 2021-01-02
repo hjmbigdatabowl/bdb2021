@@ -86,6 +86,21 @@ get_target_location_at_throw <- function(pbp, football_data, targeted_receiver) 
 
 }
 
+#' get_heights returns a data frame of player heights
+#' @return a data frame of the heights
+#' @importFrom magrittr %>%
+#' @importFrom dplyr mutate select
+#' @importFrom tidyr separate replace_na
+#' @importFrom rlang .data
+#'
+get_heights <- function() {
+  read_non_week_files()$players %>%
+    separate(.data$height, into = c('ft', 'inches'), sep = '-', fill = 'left', convert = TRUE) %>%
+    mutate(ft = replace_na(.data$ft, 0),
+           height = 12 * .data$ft + .data$inches) %>%
+    select(.data$nflId, .data$height)
+}
+
 #' get_football_location_at_arrival returns a data frame of the location of the football on each play
 #' @return a data frame with the positions of the football at arrival
 #' @param pbp a dataframe of play-by-play data
@@ -276,6 +291,7 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
   football_locations_at_arrival <- get_football_location_at_arrival(pbp_data)
   sacks_and_pis <- get_pi_and_sack(nonweek$plays)
   play_outcomes <- get_play_outcomes(pbp_data, sacks_and_pis)
+  heights <- get_heights()
 
   ## i'll factor this out later
   receiver_skill <- pbp_data %>%
@@ -387,7 +403,7 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
     left_join(football_locations_at_arrival, by = c('gameId', 'playId')) %>%
     left_join(target_position_at_throw, by = c('gameId', 'playId')) %>%
     left_join(receiver_skill, by = c('targetNflId' = 'nflId')) %>%
-    left_join(nonweek$players %>% select(.data$nflId, .data$height), by = c('targetNflId' = 'nflId'))
+    left_join(heights, by = c('targetNflId' = 'nflId'))
 
   return(df)
 }
