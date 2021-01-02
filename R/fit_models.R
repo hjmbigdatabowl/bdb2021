@@ -11,7 +11,6 @@
 #' @export
 #'
 fit_catch_prob_xgb <- function(workflow, pars, data_split, data) {
-
   final_xgb <- tune::finalize_workflow(
     workflow,
     pars
@@ -22,8 +21,10 @@ fit_catch_prob_xgb <- function(workflow, pars, data_split, data) {
 
   save(final_xgb, final_res, file = "inst/models/catch_prob_xgb.Rdata")
 
-  return(list(final_xgb = final_xgb,
-              final_res = final_res))
+  return(list(
+    final_xgb = final_xgb,
+    final_res = final_res
+  ))
 }
 
 #' fit_target_prob_rf fit the rf target prob model
@@ -40,7 +41,6 @@ fit_catch_prob_xgb <- function(workflow, pars, data_split, data) {
 #' @export
 #'
 fit_target_prob_rf <- function(workflow, pars, data_split, data) {
-
   final_rf <- tune::finalize_workflow(
     workflow,
     pars
@@ -51,8 +51,10 @@ fit_target_prob_rf <- function(workflow, pars, data_split, data) {
 
   save(final_rf, final_res, file = "inst/models/target_prob_rf.Rdata")
 
-  return(list(final_rf = final_rf,
-              final_res = final_res))
+  return(list(
+    final_rf = final_rf,
+    final_res = final_res
+  ))
 }
 
 #' fit_logit_platt_scaler fit the Platt scaler to calibrate the xgboost predictions
@@ -71,11 +73,13 @@ fit_target_prob_rf <- function(workflow, pars, data_split, data) {
 fit_logit_platt_scaler <- function(model, data) {
   . <- NULL
   preds <- data %>%
-    mutate(predprob = predict(model, ., type = 'prob')$.pred_Complete,
-           target = as.factor(.data$outcome))
+    mutate(
+      predprob = predict(model, ., type = "prob")$.pred_Complete,
+      target = as.factor(.data$outcome)
+    )
 
   logit_model <- logistic_reg() %>%
-    set_engine('glm') %>%
+    set_engine("glm") %>%
     fit(target ~ predprob, data = preds)
 
   return(logit_model)
@@ -97,8 +101,8 @@ fit_logit_platt_scaler <- function(model, data) {
 stepwise_catch_prob_predict <- function(data, xgb_model, logit_model) {
   . <- NULL
   preds <- data %>%
-    mutate(predprob = predict(xgb_model, ., type = 'prob')$.pred_Complete) %>%
-    mutate(calibratedprob = predict(logit_model, ., type = 'prob')$.pred_Complete)
+    mutate(predprob = predict(xgb_model, ., type = "prob")$.pred_Complete) %>%
+    mutate(calibratedprob = predict(logit_model, ., type = "prob")$.pred_Complete)
 
   return(preds$predprob)
 }
@@ -119,9 +123,8 @@ stepwise_catch_prob_predict <- function(data, xgb_model, logit_model) {
 stepwise_target_prob_predict <- function(data, rf_model, logit_model) {
   . <- NULL
   preds <- data %>%
-    mutate(predprob = predict(rf_model, ., type = 'prob')$.pred_Complete) %>%
-    mutate(calibratedprob = predict(logit_model, ., type = 'prob')$.pred_Complete)
+    mutate(predprob = predict(rf_model, ., type = "prob")$.pred_Complete) %>%
+    mutate(calibratedprob = predict(logit_model, ., type = "prob")$.pred_Complete)
 
   return(preds$calibratedprob)
 }
-

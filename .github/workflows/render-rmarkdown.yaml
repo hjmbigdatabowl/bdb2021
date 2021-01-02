@@ -33,4 +33,3 @@ jobs:
           git config --local user.name "GitHub Actions"
           git commit ${RMD_PATH[*]/.Rmd/.md} -m 'Re-build Rmarkdown files' || echo "No changes to commit"
           git push origin || echo "No changes to commit"
-
