@@ -42,3 +42,5 @@ Imports:
     gt (>= 0.2.2),
     rstudioapi (>= 0.13),
     scales (>= 1.1.1)
+Suggests: 
+    covr
