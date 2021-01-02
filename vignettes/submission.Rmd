@@ -1,0 +1,17 @@
+---
+title: "Submission"
+output: rmarkdown::html_vignette
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(bdb2021)
+```
+
+This is our submission. Results to come
