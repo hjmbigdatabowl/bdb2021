@@ -1,34 +1,11 @@
-# For help debugging build failures open an issue on the RStudio community with the 'github-actions' tag.
-# https://community.rstudio.com/new-topic?category=Package%20development&tags=github-actions
 on:
   push:
-    branches:
-      - main
-      - master
-  pull_request:
-    branches:
-      - main
-      - master
+    paths:
+      - '**.Rmd'
 
-name: R-CMD-check
+name: Render Rmarkdown files
 
 jobs:
-  R-CMD-check:
-    runs-on: macOS-latest
-    env:
-      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - uses: actions/checkout@v2
-      - uses: r-lib/actions/setup-r@v1
-      - name: Install dependencies
-        run: |
-          install.packages("devtools")
-          devtools::install_deps(dependencies = TRUE)
-        shell: Rscript {0}
-      - name: Check
-        run: |
-          devtools::check(manual = FALSE, vignettes = FALSE, error_on = "warning")
-        shell: Rscript {0}
   render:
     name: Render Rmarkdown files
     runs-on: macOS-latest
@@ -56,3 +33,4 @@ jobs:
           git config --local user.name "GitHub Actions"
           git commit ${RMD_PATH[*]/.Rmd/.md} -m 'Re-build Rmarkdown files' || echo "No changes to commit"
           git push origin || echo "No changes to commit"
+
