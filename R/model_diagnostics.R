@@ -38,7 +38,8 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model) {
 
   results <- test %>%
     mutate(target = as.factor(.data$outcome),
-           predprob = stepwise_catch_prob_predict(., xgb_model, logit_model),
+           predprob = predict(xgb_model, ., type = 'prob')$.pred_Complete,
+           calibratedprob = stepwise_catch_prob_predict(., xgb_model, logit_model),
            pred_outcome = ifelse(.data$predprob > THRESHOLD_TO_USE, 'Complete', 'Incomplete'))
 
   (
@@ -96,7 +97,7 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model) {
 
   (
     varimp <-   pull_workflow_fit(xgb_model) %>%
-      vip(20)
+      vip(40)
   )
 
   ggsave('roc_plot.png', roc_plot, device = 'png', path = 'inst/plots/')
