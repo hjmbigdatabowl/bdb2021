@@ -17,7 +17,7 @@ recalc_prob <- function(defender_to_remove, data, xgb_model, logit_model) {
     mutate(calibratedpreds = stepwise_catch_prob_predict(., xgb_model, logit_model))
 
 
-  idcol_to_remove <- data[[glue('nflId_def_{defender_to_remove}')]]
+  idcol_to_remove <- data[[glue("nflId_def_{defender_to_remove}")]]
 
   for (i in 1:11) {
     if (i > defender_to_remove & i <= 11) {
@@ -39,7 +39,7 @@ recalc_prob <- function(defender_to_remove, data, xgb_model, logit_model) {
 
   data$nflId_def_11 <- idcol_to_remove
   data$dist_to_def_11 <- 999
-  data$grouped_def_pos_11 <- 'Other'
+  data$grouped_def_pos_11 <- "Other"
   data$veloToIntercept_def_11 <- 999
 
   preds <- stepwise_catch_prob_predict(data, xgb_model, logit_model)
@@ -61,12 +61,13 @@ recalc_prob <- function(defender_to_remove, data, xgb_model, logit_model) {
 #' @export
 #'
 divvy_credit <- function(data, xgb_model, logit_model) {
-
   original_preds <- stepwise_catch_prob_predict(data, xgb_model, logit_model)
 
-  new_preds <- data.frame(gameId = data$gameId,
-                          playId = data$playId,
-                          original_preds = original_preds)
+  new_preds <- data.frame(
+    gameId = data$gameId,
+    playId = data$playId,
+    original_preds = original_preds
+  )
   for (i in 1:11) {
     new_preds[[i + 3]] <- (recalc_prob(i, data, xgb_model, logit_model))
   }
@@ -81,10 +82,14 @@ divvy_credit <- function(data, xgb_model, logit_model) {
     rowSums()
 
   diffs <- diffs %>%
-    mutate(across(-c(.data$original_preds, .data$gameId, .data$playId), function(x) x / rowsums),
-           across(-c(.data$original_preds, .data$gameId, .data$playId), function(x) ifelse(is.na(x), 1/11, x))) %>%
-    rename_with(function(x) glue("def_{(str_sub(x, 2L, -1L) %>% as.numeric())-3}"),
-                -c(.data$gameId, .data$playId, .data$original_preds))
+    mutate(
+      across(-c(.data$original_preds, .data$gameId, .data$playId), function(x) x / rowsums),
+      across(-c(.data$original_preds, .data$gameId, .data$playId), function(x) ifelse(is.na(x), 1 / 11, x))
+    ) %>%
+    rename_with(
+      function(x) glue("def_{(str_sub(x, 2L, -1L) %>% as.numeric())-3}"),
+      -c(.data$gameId, .data$playId, .data$original_preds)
+    )
 
   return(diffs)
 }

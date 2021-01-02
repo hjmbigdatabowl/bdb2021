@@ -7,9 +7,9 @@
 #' @import gt
 #' @export
 #'
-gt_theme_538 <- function(data,...) {
+gt_theme_538 <- function(data, ...) {
   data %>%
-    opt_all_caps()  %>%
+    opt_all_caps() %>%
     opt_table_font(
       font = list(
         google_font("Chivo"),
@@ -26,7 +26,7 @@ gt_theme_538 <- function(data,...) {
         # Regardless of data size
         rows = nrow(data$`_data`)
       )
-    )  %>%
+    ) %>%
     tab_options(
       column_labels.background.color = "white",
       table.border.top.width = px(3),
@@ -67,7 +67,7 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
   teams_colors_logos <- NULL
 
   preds <- stepwise_catch_prob_predict(data, xgb_model, logit_model)
-  data('teams_colors_logos', envir = environment())
+  data("teams_colors_logos", envir = environment())
   nonweek <- read_non_week_files()
 
   credit <- divvy_credit(data, xgb_model, logit_model)
@@ -76,16 +76,18 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
     left_join(credit, by = c("gameId", "playId")) %>%
     select(.data$gameId, .data$playId, .data$nflId_def_1:.data$nflId_def_11) %>%
     pivot_longer(-c(.data$gameId, .data$playId),
-                 names_to = "defender",
-                 values_to = "nflId") %>%
+      names_to = "defender",
+      values_to = "nflId"
+    ) %>%
     mutate(defender = str_sub(.data$defender, 11L, -1L))
 
   creds <- data %>%
     left_join(credit, by = c("gameId", "playId")) %>%
     select(.data$gameId, .data$playId, .data$def_1:.data$def_11) %>%
     pivot_longer(-c(.data$gameId, .data$playId),
-                 names_to = "defender",
-                 values_to = "credit") %>%
+      names_to = "defender",
+      values_to = "credit"
+    ) %>%
     mutate(defender = str_sub(.data$defender, 5L, -1L))
 
   all_credit <- left_join(ids, creds, by = c("gameId", "playId", "defender"))
@@ -110,13 +112,17 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
     rename(team = .data$defendingTeam)
 
   results <- data %>%
-    mutate(preds = preds,
-           numeric_outcome = ifelse(.data$outcome == "Complete", 1, 0),
-           marginal = .data$numeric_outcome - .data$preds) %>%
+    mutate(
+      preds = preds,
+      numeric_outcome = ifelse(.data$outcome == "Complete", 1, 0),
+      marginal = .data$numeric_outcome - .data$preds
+    ) %>%
     select(.data$gameId, .data$playId, .data$marginal, .data$nflId_def_1:.data$nflId_def_11) %>%
-    pivot_longer(cols = -c(.data$gameId, .data$playId, .data$marginal),
-                 names_to = "defender",
-                 values_to = "nflId") %>%
+    pivot_longer(
+      cols = -c(.data$gameId, .data$playId, .data$marginal),
+      names_to = "defender",
+      values_to = "nflId"
+    ) %>%
     select(-.data$nflId) %>%
     mutate(defender = str_sub(.data$defender, 11L, -1L)) %>%
     left_join(all_credit, by = c("gameId", "playId", "defender")) %>%
@@ -125,11 +131,15 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
     drop_na(.data$nflId) %>%
     mutate(drops_added = .data$credit * .data$marginal) %>%
     group_by(.data$nflId) %>%
-    summarize(drops_added = sum(.data$drops_added),
-                     epa_added = sum(.data$epa),
-                     plays = n(), .groups = "drop") %>%
-    mutate(drops_perplay = .data$drops_added / .data$plays,
-                  epa_perplay = .data$epa_added / .data$plays) %>%
+    summarize(
+      drops_added = sum(.data$drops_added),
+      epa_added = sum(.data$epa),
+      plays = n(), .groups = "drop"
+    ) %>%
+    mutate(
+      drops_perplay = .data$drops_added / .data$plays,
+      epa_perplay = .data$epa_added / .data$plays
+    ) %>%
     left_join(nonweek$players, by = c("nflId" = "nflId")) %>%
     arrange(desc(.data$epa_perplay)) %>%
     select(.data$nflId, .data$displayName, .data$position, .data$plays, .data$drops_added, .data$drops_perplay)
@@ -150,11 +160,13 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
       by = c("team" = "team_abbr")
     ) %>%
     group_by(.data$nflId) %>%
-    filter(row_number() == 1L,
-           .data$position %in% c("CB", "S", "FS", "SS")) %>%
+    filter(
+      row_number() == 1L,
+      .data$position %in% c("CB", "S", "FS", "SS")
+    ) %>%
     ungroup() %>%
     arrange(desc(.data$drops_added)) %>%
-    mutate(rank=row_number()) %>%
+    mutate(rank = row_number()) %>%
     select(.data$rank, .data$position, .data$displayName, .data$team_logo_espn, .data$plays, .data$drops_added, .data$drops_perplay) %>%
     arrange_by(show_top) %>%
     head(num) %>%
@@ -191,8 +203,10 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
 
   gtsave(tab, "catch_prob_rankings.png", path = "inst/tables")
 
-  return(list(results = results,
-              table = tab))
+  return(list(
+    results = results,
+    table = tab
+  ))
 }
 
 #' make_tendency_table makes the deterrence table
@@ -213,13 +227,13 @@ make_tendency_table <- function(data, model) {
 
   nonweek_data <- read_non_week_files()
   players <- nonweek_data$players
-  data('teams_colors_logos', envir = environment())
+  data("teams_colors_logos", envir = environment())
 
   # bin_pred <- predict(target_mod_bin, newdata = tendency_plays[test_idx,], type='response')
-  pos_pred <- predict(model, data, type="prob")$.pred_1
+  pos_pred <- predict(model, data, type = "prob")$.pred_1
 
   results_df <- cbind(
-    data[,c("gameId", "playId", "x_adj", "y_adj", "def_distance", "dist_side_line", "regressed_targets", "position", "target_flg")],
+    data[, c("gameId", "playId", "x_adj", "y_adj", "def_distance", "dist_side_line", "regressed_targets", "position", "target_flg")],
     pos_pred
   )
 
@@ -232,14 +246,14 @@ make_tendency_table <- function(data, model) {
     ) %>%
     ggplot() +
     # geom_point(aes(x=pred_targets_bin, y=actual_targets, size=n), alpha=0.7, color="coral") +
-    geom_point(aes(x=.data$predTargetsPosition, y=.data$actualTargets, size=.data$n), alpha=0.7) + #color="dodgerblue") +
-    geom_abline(slope=1, intercept = 0) +
+    geom_point(aes(x = .data$predTargetsPosition, y = .data$actualTargets, size = .data$n), alpha = 0.7) + # color="dodgerblue") +
+    geom_abline(slope = 1, intercept = 0) +
     # facet_wrap(~position) +
-    theme(axis.title= element_text()) +
-    labs(title="RF Target Model", x="Predicted Target Rate", y="Actual Target Rate")
+    theme(axis.title = element_text()) +
+    labs(title = "RF Target Model", x = "Predicted Target Rate", y = "Actual Target Rate")
 
   with_defender <- results_df %>%
-    left_join(players, by=c("defId1" = "nflId"))
+    left_join(players, by = c("defId1" = "nflId"))
 
 
   def_agg <- with_defender %>%
@@ -262,9 +276,11 @@ make_tendency_table <- function(data, model) {
     ) %>%
     filter(.data$plays >= 1) %>%
     arrange(desc(.data$targets_added)) %>%
-    mutate(rank=row_number()) %>%
-    select(.data$rank, .data$defPosition1, .data$displayName, .data$birthDate, .data$height, .data$weight,
-           .data$team_logo_espn, .data$plays, .data$expected_targets, .data$actual_targets, .data$targets_added) %>%
+    mutate(rank = row_number()) %>%
+    select(
+      .data$rank, .data$defPosition1, .data$displayName, .data$birthDate, .data$height, .data$weight,
+      .data$team_logo_espn, .data$plays, .data$expected_targets, .data$actual_targets, .data$targets_added
+    ) %>%
     arrange(-.data$rank) %>%
     head(20) %>%
     gt() %>%
@@ -298,5 +314,4 @@ make_tendency_table <- function(data, model) {
       targets_added = "targets saved"
     ) %>%
     gt_theme_538()
-
 }

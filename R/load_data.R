@@ -5,7 +5,7 @@
 #' @return data.frame with the loaded file
 #' @export
 read_from_data <- function(file) {
-  read_csv(paste0('inst/data/', file), col_types = cols())  # suppresses col specs and uses default guess
+  read_csv(paste0("inst/data/", file), col_types = cols()) # suppresses col specs and uses default guess
 }
 
 #' read_non_week_files read all of the non-PBP data
@@ -17,11 +17,11 @@ read_from_data <- function(file) {
 #' @return a list of data.frames with the loaded files
 #' @export
 read_non_week_files <- function() {
-  files <- unzip("inst/data/nfl-big-data-bowl-2021.zip",list=TRUE) %>%
-    filter(!grepl('week', .data$Name)) %>%
+  files <- unzip("inst/data/nfl-big-data-bowl-2021.zip", list = TRUE) %>%
+    filter(!grepl("week", .data$Name)) %>%
     pull(.data$Name)
 
-  fnames <- str_remove(files, '.csv')
+  fnames <- str_remove(files, ".csv")
 
   out <- c()
   for (i in 1:length(files)) {
@@ -39,9 +39,9 @@ read_non_week_files <- function() {
 #' @return a data.frame with the PBP data for the specified week
 #' @export
 read_individual_week <- function(week) {
-  to_pluck <- paste0('week', week, '.csv')
+  to_pluck <- paste0("week", week, ".csv")
 
-  list.files('inst/data/') %>%
+  list.files("inst/data/") %>%
     keep(function(x) x == to_pluck) %>%
     map(read_from_data) %>%
     bind_rows()
@@ -54,9 +54,9 @@ read_individual_week <- function(week) {
 #' @return a data.frame with the PBP data for the specified week
 #' @export
 aggregate_week_files <- function() {
-  list.files('inst/data/') %>%
-    keep(function(x) grepl('week', x)) %>%
-    discard(function(x) grepl('coverages_week1.csv', x)) %>%
+  list.files("inst/data/") %>%
+    keep(function(x) grepl("week", x)) %>%
+    discard(function(x) grepl("coverages_week1.csv", x)) %>%
     map(read_from_data) %>%
     bind_rows()
 }
@@ -67,5 +67,5 @@ aggregate_week_files <- function() {
 #' @return a data.frame with the targets data
 #' @export
 read_targets <- function() {
-  read_csv('inst/data/targetedReceiver.csv', col_types = cols())
+  read_csv("inst/data/targetedReceiver.csv", col_types = cols())
 }

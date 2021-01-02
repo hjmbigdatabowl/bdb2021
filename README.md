@@ -5,6 +5,7 @@
 
 <!-- badges: start -->
 
+[![R-CMD-check](https://github.com/hjmbigdatabowl/bdb2021/workflows/R-CMD-check/badge.svg)](https://github.com/hjmbigdatabowl/bdb2021/actions)
 <!-- badges: end -->
 
 The goal of bdb2021 is to …

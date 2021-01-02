@@ -25,18 +25,20 @@ tune_catch_prob_xgb <- function(data) {
 
   ncores <- as.integer(ncores)
 
-  if (is.na(ncores)){
+  if (is.na(ncores)) {
     stop("Error: Improper number of cores provided. Please provide an integer greater than or equal to 1.")
-  } else if (ncores > detectCores()){
+  } else if (ncores > detectCores()) {
     stop("Error: Number of cores specified exceeds number of cores available on this machine. Please specify an integer between 1 and the value output by parallel::detectCores().")
   } else if (ncores == detectCores()) {
     askYesNo("Warning: Number of cores provided is equal to the number of cores detected on this machine. This may impact performance for other programs on your computer. Do you wish to proceed?")
   }
 
   data <- data %>%
-    select(.data$dist_to_def_1:.data$veloToIntercept_def_11, .data$max_throw_velo, .data$throwdist,
-           .data$numberOfPassRushers, .data$targetXThrow, .data$targetYThrow, .data$footballXArr, .data$footballYArr,
-           .data$conditions, .data$temperature, .data$targetSThrow, .data$targetAThrow, .data$skill, .data$height, .data$outcome) %>%
+    select(
+      .data$dist_to_def_1:.data$veloToIntercept_def_11, .data$max_throw_velo, .data$throwdist,
+      .data$numberOfPassRushers, .data$targetXThrow, .data$targetYThrow, .data$footballXArr, .data$footballYArr,
+      .data$conditions, .data$temperature, .data$targetSThrow, .data$targetAThrow, .data$skill, .data$height, .data$outcome
+    ) %>%
     mutate(across(where(is.character), as.factor))
 
   data_split <- initial_split(data, strata = .data$outcome)
@@ -67,7 +69,7 @@ tune_catch_prob_xgb <- function(data) {
 
   prep_rec <- recipe(outcome ~ ., data = data_train) %>%
     step_other(all_nominal(), -all_outcomes(), threshold = 0.01) %>%
-    step_dummy(all_nominal(),-all_outcomes())
+    step_dummy(all_nominal(), -all_outcomes())
 
   xgb_wf <- workflow() %>%
     add_recipe(prep_rec) %>%
@@ -81,26 +83,32 @@ tune_catch_prob_xgb <- function(data) {
     resamples = data_folds,
     param_info = xgb_params,
     iter = 500,
-    metrics = metric_set(f_meas,
-                         roc_auc,
-                         bal_accuracy,
-                         accuracy,
-                         kap),
+    metrics = metric_set(
+      f_meas,
+      roc_auc,
+      bal_accuracy,
+      accuracy,
+      kap
+    ),
     initial = 20,
-    control = control_bayes(no_improve = 200,
-                                  uncertain = 50,
-                                  save_pred = F,
-                                  time_limit = 600,
-                                  verbose = T)
+    control = control_bayes(
+      no_improve = 200,
+      uncertain = 50,
+      save_pred = F,
+      time_limit = 600,
+      verbose = T
+    )
   )
 
   best_auc <- select_best(xgb_res, "f_meas")
-  save(xgb_spec, xgb_res, xgb_wf, best_auc, data_folds, file = 'inst/models/catch_prob_xgb_xval.Rdata')
-  return(list(data = data,
-              data_split = data_split,
-              workflow = xgb_wf,
-              parameters = best_auc,
-              tune_results = xgb_res))
+  save(xgb_spec, xgb_res, xgb_wf, best_auc, data_folds, file = "inst/models/catch_prob_xgb_xval.Rdata")
+  return(list(
+    data = data,
+    data_split = data_split,
+    workflow = xgb_wf,
+    parameters = best_auc,
+    tune_results = xgb_res
+  ))
 }
 
 #' tune_target_prob_rf tune the rf target prob model
@@ -132,18 +140,20 @@ tune_target_prob_rf <- function(data) {
 
   ncores <- as.integer(ncores)
 
-  if(is.na(ncores)){
+  if (is.na(ncores)) {
     stop("Error: Improper number of cores provided. Please provide an integer greater than or equal to 1.")
-  } else if(ncores > detectCores()){
+  } else if (ncores > detectCores()) {
     stop("Error: Number of cores specified exceeds number of cores available on this machine. Please specify an integer between 1 and the value output by parallel::detectCores().")
   }
-  else if(ncores == detectCores()){
+  else if (ncores == detectCores()) {
     askYesNo("Warning: Number of cores provided is equal to the number of cores detected on this machine. This may impact performance for other programs on your computer. Do you wish to proceed?")
   }
   data <- data %>%
-    select(.data$xAdj, .data$yAdj, .data$defPosition,
-           .data$receiverPosition, .data$defDistance, .data$distSideLine, .data$oAdjCos, .data$regressedTargets,
-           .data$targetFlag) %>%
+    select(
+      .data$xAdj, .data$yAdj, .data$defPosition,
+      .data$receiverPosition, .data$defDistance, .data$distSideLine, .data$oAdjCos, .data$regressedTargets,
+      .data$targetFlag
+    ) %>%
     mutate(across(where(is.character), as.factor))
 
   data_split <- initial_split(data, strata = .data$targetFlag)
@@ -165,10 +175,10 @@ tune_target_prob_rf <- function(data) {
   )
 
   prep_rec <-
-    recipe(formula = .data$targetFlag ~., data = data_train) %>%
+    recipe(formula = .data$targetFlag ~ ., data = data_train) %>%
     step_other(all_nominal(), -all_outcomes(), threshold = 0.01) %>%
-    step_dummy(all_nominal(),-all_outcomes()) %>%
-    step_knnimpute(all_numeric(),-all_outcomes()) %>%
+    step_dummy(all_nominal(), -all_outcomes()) %>%
+    step_knnimpute(all_numeric(), -all_outcomes()) %>%
     step_mutate(targetFlag = as.factor(.data$targetFlag))
 
   rf_wf <- workflow() %>%
@@ -183,26 +193,32 @@ tune_target_prob_rf <- function(data) {
     resamples = data_folds,
     param_info = rf_params,
     iter = 500,
-    metrics = metric_set(roc_auc,
-                         bal_accuracy,
-                         f_meas,
-                         accuracy,
-                         kap),
+    metrics = metric_set(
+      roc_auc,
+      bal_accuracy,
+      f_meas,
+      accuracy,
+      kap
+    ),
     initial = 20,
-    control = control_bayes(no_improve = 200,
-                            uncertain = 50,
-                            save_pred = F,
-                            time_limit = 600,
-                            verbose = T)
+    control = control_bayes(
+      no_improve = 200,
+      uncertain = 50,
+      save_pred = F,
+      time_limit = 600,
+      verbose = T
+    )
   )
 
   best_auc <- select_best(rf_res, "roc_auc")
-  save(rf_spec, rf_res, rf_wf, best_auc, data_folds, file = 'inst/models/target_prob_rf_xval.Rdata')
-  return(list(data = data,
-              data_split = data_split,
-              workflow = rf_wf,
-              parameters = best_auc,
-              tune_results = rf_res))
+  save(rf_spec, rf_res, rf_wf, best_auc, data_folds, file = "inst/models/target_prob_rf_xval.Rdata")
+  return(list(
+    data = data,
+    data_split = data_split,
+    workflow = rf_wf,
+    parameters = best_auc,
+    tune_results = rf_res
+  ))
 }
 
 #' tune_target_prob_xgb tune the XGB target probability model
@@ -233,22 +249,25 @@ tune_target_prob_xgb <- function(data) {
 
   ncores <- as.integer(ncores)
 
-  if(is.na(ncores)){
+  if (is.na(ncores)) {
     stop("Error: Improper number of cores provided. Please provide an integer greater than or equal to 1.")
-  } else if(ncores > detectCores()){
+  } else if (ncores > detectCores()) {
     stop("Error: Number of cores specified exceeds number of cores available on this machine. Please specify an integer between 1 and the value output by parallel::detectCores().")
   }
-  else if(ncores == detectCores()){
+  else if (ncores == detectCores()) {
     askYesNo("Warning: Number of cores provided is equal to the number of cores detected on this machine. This may impact performance for other programs on your computer. Do you wish to proceed?")
   }
 
   data <- data %>%
-    select(.data$xAdj, .data$yAdj, .data$oAdj, .data$receiverPosition, .data$distSideLine, .data$distToFirst, .data$distToEndzone,
-           .data$regressedTargets, .data$defPosition1:.data$defPosition3, .data$defDistance1:.data$defDistance3,
-           .data$minDefDistancePlay, .data$maxDefDistancePlay, .data$playOpenRank, .data$qbO, .data$qbSpeed,
-           .data$halfSecondsRemaining, .data$scoreDifferential, .data$targetFlag) %>%
+    select(
+      .data$xAdj, .data$yAdj, .data$oAdj, .data$receiverPosition, .data$distSideLine, .data$distToFirst, .data$distToEndzone,
+      .data$regressedTargets, .data$defPosition1:.data$defPosition3, .data$defDistance1:.data$defDistance3,
+      .data$minDefDistancePlay, .data$maxDefDistancePlay, .data$playOpenRank, .data$qbO, .data$qbSpeed,
+      .data$halfSecondsRemaining, .data$scoreDifferential, .data$targetFlag
+    ) %>%
     mutate(across(where(is.character), as.factor),
-           targetFlag = as.factor(.data$targetFlag))
+      targetFlag = as.factor(.data$targetFlag)
+    )
 
   data_split <- initial_split(data, strata = .data$targetFlag)
   data_train <- training(data_split)
@@ -276,10 +295,10 @@ tune_target_prob_xgb <- function(data) {
     finalize(mtry(), data_train)
   )
 
-  prep_rec <- recipe(formula = .data$targetFlag ~., data = data_train) %>%
+  prep_rec <- recipe(formula = .data$targetFlag ~ ., data = data_train) %>%
     step_other(all_nominal(), -all_outcomes(), threshold = 0.01) %>%
-    step_dummy(all_nominal(),-all_outcomes()) %>%
-    step_knnimpute(all_numeric(),-all_outcomes())
+    step_dummy(all_nominal(), -all_outcomes()) %>%
+    step_knnimpute(all_numeric(), -all_outcomes())
 
   xgb_wf <- workflow() %>%
     add_recipe(prep_rec) %>%
@@ -293,24 +312,30 @@ tune_target_prob_xgb <- function(data) {
     resamples = data_folds,
     param_info = xgb_params,
     iter = 500,
-    metrics = metric_set(roc_auc,
-                         bal_accuracy,
-                         f_meas,
-                         accuracy,
-                         kap),
+    metrics = metric_set(
+      roc_auc,
+      bal_accuracy,
+      f_meas,
+      accuracy,
+      kap
+    ),
     initial = 20,
-    control = control_bayes(no_improve = 200,
-                            uncertain = 50,
-                            save_pred = F,
-                            time_limit = 600,
-                            verbose = T)
+    control = control_bayes(
+      no_improve = 200,
+      uncertain = 50,
+      save_pred = F,
+      time_limit = 600,
+      verbose = T
+    )
   )
 
   best_auc <- select_best(xgb_res, "roc_auc")
-  save(xgb_spec, xgb_res, xgb_wf, best_auc, data_folds, file = 'inst/models/target_prob_xgb_xval.Rdata')
-  return(list(data = data,
-              data_split = data_split,
-              workflow = xgb_wf,
-              parameters = best_auc,
-              tune_results = xgb_res))
+  save(xgb_spec, xgb_res, xgb_wf, best_auc, data_folds, file = "inst/models/target_prob_xgb_xval.Rdata")
+  return(list(
+    data = data,
+    data_split = data_split,
+    workflow = xgb_wf,
+    parameters = best_auc,
+    tune_results = xgb_res
+  ))
 }
