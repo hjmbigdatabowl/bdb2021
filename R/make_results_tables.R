@@ -68,6 +68,7 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
 
   preds <- stepwise_catch_prob_predict(data, xgb_model, logit_model)
   data("teams_colors_logos", envir = environment())
+
   nonweek <- read_non_week_files()
 
   credit <- divvy_credit(data, xgb_model, logit_model)

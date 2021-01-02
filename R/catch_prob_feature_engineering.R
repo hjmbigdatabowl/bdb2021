@@ -95,6 +95,21 @@ get_target_location_at_throw <- function(pbp, football_data, targeted_receiver) 
     )
 }
 
+#' get_heights returns a data frame of player heights
+#' @return a data frame of the heights
+#' @importFrom magrittr %>%
+#' @importFrom dplyr mutate select
+#' @importFrom tidyr separate replace_na
+#' @importFrom rlang .data
+#'
+get_heights <- function() {
+  read_non_week_files()$players %>%
+    separate(.data$height, into = c('ft', 'inches'), sep = '-', fill = 'left', convert = TRUE) %>%
+    mutate(ft = replace_na(.data$ft, 0),
+           height = 12 * .data$ft + .data$inches) %>%
+    select(.data$nflId, .data$height)
+}
+
 #' get_football_location_at_arrival returns a data frame of the location of the football on each play
 #' @return a data frame with the positions of the football at arrival
 #' @param pbp a dataframe of play-by-play data
@@ -162,8 +177,8 @@ create_throw_vectors <- function(football_data, throw_midpoint_frame_id) {
   SECONDS_PER_FRAME <- .1 ## TODO: reconcile w/ value in matt_feature_eng.R
   return(
     throw_midpoint_frame_id %>%
-      inner_join(football_data) %>%
-      rename(x = .data$footballX, y = .data$footballY) %>% ## TODO: will change football_data style
+      inner_join(football_data, by = c("gameId", "playId", "frameId")) %>%
+      rename(x = .data$footballX, y = .data$footballY) %>%  ## TODO: will change football_data style
       pivot_wider(
         id_cols = c(.data$gameId, .data$playId),
         names_from = .data$frame,
@@ -292,6 +307,7 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
   football_locations_at_arrival <- get_football_location_at_arrival(pbp_data)
   sacks_and_pis <- get_pi_and_sack(nonweek$plays)
   play_outcomes <- get_play_outcomes(pbp_data, sacks_and_pis)
+  heights <- get_heights()
 
   ## i'll factor this out later
   receiver_skill <- pbp_data %>%
