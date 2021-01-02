@@ -29,3 +29,4 @@ jobs:
         run: |
           devtools::check(manual = FALSE, vignettes = FALSE, error_on = "warning")
         shell: Rscript {0}
+
