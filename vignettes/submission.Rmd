@@ -1,6 +1,10 @@
 ---
 title: "Submission"
 output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Submission}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r, include = FALSE}
@@ -14,4 +18,4 @@ knitr::opts_chunk$set(
 library(bdb2021)
 ```
 
-This is our submission. Results to come
+This is our submission. Results coming soon.

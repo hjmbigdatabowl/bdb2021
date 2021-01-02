@@ -4,3 +4,6 @@
 /inst/models/*
 /inst/data/*
 !inst/.gitignore
+inst/doc
+doc
+Meta
