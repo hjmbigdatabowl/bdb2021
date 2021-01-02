@@ -106,8 +106,8 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model) {
   )
 
   (
-    varimp <- pull_workflow_fit(xgb_model) %>%
-      vip(20)
+    varimp <-   pull_workflow_fit(xgb_model) %>%
+      vip(40)
   )
 
   ggsave("roc_plot.png", roc_plot, device = "png", path = "inst/plots/")

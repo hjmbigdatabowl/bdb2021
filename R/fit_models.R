@@ -104,7 +104,7 @@ stepwise_catch_prob_predict <- function(data, xgb_model, logit_model) {
     mutate(predprob = predict(xgb_model, ., type = "prob")$.pred_Complete) %>%
     mutate(calibratedprob = predict(logit_model, ., type = "prob")$.pred_Complete)
 
-  return(preds$calibratedprob)
+  return(preds$predprob)
 }
 
 #' stepwise_target_prob_predict Make calibrated predictions from rf + Platt scaling
