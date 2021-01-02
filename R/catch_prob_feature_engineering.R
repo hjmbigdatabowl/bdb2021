@@ -163,7 +163,7 @@ create_throw_vectors <- function(football_data, throw_midpoint_frame_id){
   SECONDS_PER_FRAME <- .1  ## TODO: reconcile w/ value in matt_feature_eng.R
   return(
     throw_midpoint_frame_id %>%
-      inner_join(football_data) %>%
+      inner_join(football_data, by = c("gameId", "playId", "frameId")) %>%
       rename(x = .data$footballX, y = .data$footballY) %>%  ## TODO: will change football_data style
       pivot_wider(
         id_cols = c(.data$gameId, .data$playId),
