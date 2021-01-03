@@ -282,6 +282,7 @@ add_throw_vector_to_positions <- function(release_positions, throw_vectors) {
 #' @importFrom stringr str_remove_all
 #' @importFrom stats sd
 #' @importFrom rlang .data
+#' @importFrom cyphr encrypt key_sodium
 #' @import nflfastR
 #' @import dplyr
 #' @export
@@ -455,6 +456,10 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
     left_join(receiver_skill, by = c("targetNflId" = "nflId")) %>%
     left_join(nonweek$players %>% select(.data$nflId, .data$height), by = c("targetNflId" = "nflId"))
 
+  k <- NULL
+  load('inst/keys/sodium_key.Rdata')
+  key <- key_sodium(k)
+  encrypt(save(df, file = "inst/data/catch_prob_features.Rdata"), key)
   return(df)
 }
 

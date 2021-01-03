@@ -2,9 +2,11 @@
 .DS_Store
 .Rhistory
 /inst/models/*
-/inst/data/*
+/inst/data/*.csv
+/inst/data/*.zip
 !inst/.gitignore
 inst/doc
+/inst/keys/sodium_key.Rdata
 doc
 Meta
 docs
