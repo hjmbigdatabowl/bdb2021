@@ -41,7 +41,8 @@ Imports:
     probably (>= 0.0.6),
     gt (>= 0.2.2),
     rstudioapi (>= 0.13),
-    scales (>= 1.1.1)
+    scales (>= 1.1.1),
+    cyphr (>= 1.1.0)
 Suggests: 
     covr,
     rmarkdown,

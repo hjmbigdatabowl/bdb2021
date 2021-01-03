@@ -203,6 +203,7 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
     gt_theme_538()
 
   gtsave(tab, "catch_prob_rankings.png", path = "inst/tables")
+  save(results, file = 'inst/data/drops_added.Rdata')
 
   return(list(
     results = results,
