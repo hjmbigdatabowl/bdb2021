@@ -26,7 +26,6 @@ save_encrypted <- function(data, file = "") {
 #'
 load_encrypted <- function(file = "") {
   secrets <- load_key_and_nonce()
-  load('inst/keys/sodium_key.Rdata', envir = environment())
   load(file, envir = environment())
   cipher <- data_decrypt(cipher, secrets$key, secrets$nonce)
   data <- unserialize(cipher)
