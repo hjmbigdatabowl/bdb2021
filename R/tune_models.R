@@ -101,7 +101,7 @@ tune_catch_prob_xgb <- function(data) {
   )
 
   best_auc <- select_best(xgb_res, "f_meas")
-  save(xgb_spec, xgb_res, xgb_wf, best_auc, data_folds, file = "inst/models/catch_prob_xgb_xval.Rdata")
+  save(xgb_spec, xgb_res, xgb_wf, best_auc, data_split, file = "inst/models/catch_prob_xgb_xval.Rdata")
   return(list(
     data = data,
     data_split = data_split,
