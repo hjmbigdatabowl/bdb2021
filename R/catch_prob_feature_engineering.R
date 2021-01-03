@@ -456,7 +456,7 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
     left_join(receiver_skill, by = c("targetNflId" = "nflId")) %>%
     left_join(heights, by = c("targetNflId" = "nflId"))
 
-  save(df, file = "inst/data/catch_prob_features.Rdata")
+  save_encrypted(df, file = "inst/data/catch_prob_features.Rdata")
   return(df)
 }
 
