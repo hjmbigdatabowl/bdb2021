@@ -47,8 +47,6 @@ gt_theme_538 <- function(data, ...) {
 
 #' make_catch_prob_table makes the drops added table
 #' @return list: the table in data frame form and gt form
-#' @param arrival_data the df from arrival time feat eng
-#' @param throw_data the df from throw time feat eng
 #' @param num the number of players to include in the table (default: 1000)
 #' @param playcutoff the min number of plays (default: 300)
 #' @param show_top True sorts by the top players, False sorts by the worst
@@ -62,7 +60,7 @@ gt_theme_538 <- function(data, ...) {
 #' @import gt
 #' @export
 #'
-make_catch_prob_table <- function(arrival_data, throw_data, num = 1000, playcutoff = 300, show_top = TRUE) {
+make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE) {
   teams_colors_logos <- NULL
   final_xgb <- NULL
 
@@ -71,6 +69,10 @@ make_catch_prob_table <- function(arrival_data, throw_data, num = 1000, playcuto
 
   load("inst/models/catch_prob_t_xgb.Rdata")
   throw_xgb <- final_xgb
+  rm(final_xgb)
+
+  arrival_data <- do_catch_prob_arrival_feat_eng()
+  throw_data <- do_catch_prob_throw_feat_eng()
 
   arrival_preds <- stepwise_catch_prob_predict(arrival_data, arrival_xgb)
   throw_preds <- stepwise_catch_prob_predict(throw_data, throw_xgb)
@@ -127,7 +129,7 @@ make_catch_prob_table <- function(arrival_data, throw_data, num = 1000, playcuto
     select(.data$gameId, .data$playId, .data$defendingTeam) %>%
     distinct()
 
-  defender_teams <- data %>%
+  defender_teams <- throw_data %>%
     select(.data$gameId, .data$playId, .data$nflId_def_1:.data$nflId_def_11) %>%
     pivot_longer(cols = c(.data$nflId_def_1:.data$nflId_def_11), names_to = "pos", values_to = "nflId") %>%
     select(.data$gameId, .data$playId, .data$nflId) %>%
@@ -137,7 +139,7 @@ make_catch_prob_table <- function(arrival_data, throw_data, num = 1000, playcuto
     distinct() %>%
     rename(team = .data$defendingTeam)
 
-  arrival_results <- data %>%
+  arrival_results <- arrival_data %>%
     mutate(
       preds = arrival_preds,
       numeric_outcome = ifelse(.data$outcome == "Complete", 1, 0),
@@ -222,7 +224,7 @@ make_catch_prob_table <- function(arrival_data, throw_data, num = 1000, playcuto
     ) %>%
     gt_theme_538()
 
-  throw_results <- data %>%
+  throw_results <- throw_data %>%
     mutate(
       preds = throw_preds,
       numeric_outcome = arrival_preds,
@@ -249,14 +251,6 @@ make_catch_prob_table <- function(arrival_data, throw_data, num = 1000, playcuto
       drops_perplay_throw = .data$drops_added_throw / .data$plays) %>%
     left_join(nonweek$players, by = c("nflId" = "nflId")) %>%
     select(.data$nflId, .data$displayName, .data$position, .data$plays, .data$drops_added_throw, .data$drops_perplay_throw)
-
-  arrange_by <- function(data, show_top = show_top) {
-    if (show_top) {
-      arrange(data, rank)
-    } else {
-      arrange(data, desc(rank))
-    }
-  }
 
   throw_tab <- throw_results %>%
     filter(.data$plays > playcutoff) %>%

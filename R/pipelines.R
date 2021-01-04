@@ -1,5 +1,5 @@
 #' run_catch_prob_tuning_pipeline runs the catch prob tuning pipeline
-#' @return the full df
+#' @return null
 #' @param throw_or_arr the model (throwtime "t" or arrival time "a" to tune)
 #' @importFrom magrittr %>%
 #' @importFrom dplyr sample_frac setdiff
@@ -36,9 +36,9 @@ run_catch_prob_tuning_pipeline <- function(throw_or_arr = "") {
     data = catch_prob_tuning_results$data,
     mod = throw_or_arr
   )
-  catch_prob_diagnostic_plots(train, test, catch_prob_model$final_xgb)
+  catch_prob_diagnostic_plots(train, test, catch_prob_model$final_xgb, throw_r_arr)
 
-  return(df)
+  return(invisible(NULL))
 }
 
 #' run_catch_prob_tuning_pipeline runs the catch prob tuning pipeline
@@ -46,9 +46,9 @@ run_catch_prob_tuning_pipeline <- function(throw_or_arr = "") {
 #' @export
 #'
 run_catch_prob_tuning_pipelines <- function() {
-  a_df <- run_catch_prob_tuning_pipeline('a')
-  t_df <- run_catch_prob_tuning_pipeline('t')
-  make_catch_prob_table(a_df, t_df, 1000, 50, TRUE)
+  run_catch_prob_tuning_pipeline('a')
+  run_catch_prob_tuning_pipeline('t')
+  make_catch_prob_table(1000, 50, TRUE)
 
   return(invisible(NULL))
 }
