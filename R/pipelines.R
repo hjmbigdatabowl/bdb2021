@@ -10,13 +10,13 @@ run_catch_prob_tuning_pipeline <- function(throw_or_arr = "") {
   df <- switch (throw_or_arr,
                 't' = do_catch_prob_throw_feat_eng() %>%
                   select(
-                    .data$dist_to_def_1:.data$veloToIntercept_def_11, .data$max_throw_velo, .data$throwdist,
+                    .data$gameId, .data$playId, .data$dist_to_def_1:.data$veloToIntercept_def_11, .data$max_throw_velo, .data$throwdist,
                     .data$numberOfPassRushers, .data$targetXThrow, .data$targetYThrow, .data$footballXArr, .data$footballYArr,
                     .data$conditions, .data$temperature, .data$targetSThrow, .data$targetAThrow, .data$skill, .data$height, .data$outcome
                   ),
                 'a' = do_catch_prob_arrival_feat_eng() %>%
                   select(
-                    .data$dist_to_def_1:.data$grouped_def_pos_11, .data$max_throw_velo, .data$throwdist,
+                    .data$gameId, .data$playId, .data$dist_to_def_1:.data$grouped_def_pos_11, .data$max_throw_velo, .data$throwdist,
                     .data$numberOfPassRushers, .data$targetXArrival, .data$targetYArrival, .data$footballXArr, .data$footballYArr,
                     .data$conditions, .data$temperature, .data$targetSArrival, .data$targetAArrival, .data$skill, .data$height, .data$outcome
                   )
@@ -37,7 +37,20 @@ run_catch_prob_tuning_pipeline <- function(throw_or_arr = "") {
     mod = throw_or_arr
   )
   catch_prob_diagnostic_plots(train, test, catch_prob_model$final_xgb)
+
+  return(invisible(NULL))
+}
+
+#' run_catch_prob_tuning_pipeline runs the catch prob tuning pipeline
+#' @return NULL (invisible)
+#' @export
+#'
+run_catch_prob_tuning_pipelines <- function() {
+  run_catch_prob_tuning_pipeline('a')
+  run_catch_prob_tuning_pipeline('t')
   make_catch_prob_table(1000, 50, TRUE)
+
+  return(invisible(NULL))
 }
 
 #' run_target_prob_tuning_pipeline pipeline for target prob model

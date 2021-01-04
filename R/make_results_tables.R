@@ -69,7 +69,7 @@ make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE)
   arrival_xgb <- final_xgb
   arrival_data <- data
 
-  load("inst/models/catch_prob_a_xgb.Rdata")
+  load("inst/models/catch_prob_t_xgb.Rdata")
   throw_xgb <- final_xgb
   throw_data <- data
 

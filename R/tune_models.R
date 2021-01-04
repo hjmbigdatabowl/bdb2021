@@ -36,6 +36,7 @@ tune_catch_prob_xgb <- function(data, mod = '') {
   }
 
   data <- data %>%
+    select(-c(.data$gameId, .data$playId)) %>%
     mutate(across(where(is.character), as.factor))
 
   data_split <- initial_split(data, strata = .data$outcome)
@@ -92,7 +93,7 @@ tune_catch_prob_xgb <- function(data, mod = '') {
       no_improve = 200,
       uncertain = 50,
       save_pred = F,
-      time_limit = 15,
+      time_limit = 8,
       verbose = T
     )
   )
