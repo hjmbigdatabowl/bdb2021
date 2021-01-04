@@ -259,15 +259,13 @@ tune_target_prob_xgb <- function(data) {
   }
 
   data <- data %>%
-    select(
-      .data$xAdj, .data$yAdj, .data$oAdj, .data$receiverPosition, .data$distSideLine, .data$distToFirst, .data$distToEndzone,
-      .data$regressedTargets, .data$defPosition1:.data$defPosition3, .data$defDistance1:.data$defDistance3,
-      .data$minDefDistancePlay, .data$maxDefDistancePlay, .data$playOpenRank, .data$qbO, .data$qbSpeed,
-      .data$halfSecondsRemaining, .data$scoreDifferential, .data$targetFlag
-    ) %>%
+    select(.data$xAdj, .data$yAdj, .data$oAdj, .data$receiverPosition, .data$distSideLine, .data$distToFirst, .data$distToEndzone,
+           .data$regressedTargets, .data$defPosition1:.data$defPosition3, .data$defDistance1:.data$defDistance3,
+           .data$minDefDistancePlay, .data$maxDefDistancePlay, .data$playOpenRank, .data$qbO, .data$qbSpeed,
+           .data$halfSecondsRemaining, .data$scoreDifferential, .data$targetFlag, .data$temperature, .data$conditions,
+           .data$typeDropback, .data$numberOfPassRushers, .data$defendersInTheBox) %>%
     mutate(across(where(is.character), as.factor),
-      targetFlag = as.factor(.data$targetFlag)
-    )
+           targetFlag = as.factor(.data$targetFlag))
 
   data_split <- initial_split(data, strata = .data$targetFlag)
   data_train <- training(data_split)
@@ -295,7 +293,7 @@ tune_target_prob_xgb <- function(data) {
     finalize(mtry(), data_train)
   )
 
-  prep_rec <- recipe(formula = .data$targetFlag ~ ., data = data_train) %>%
+  prep_rec <- recipe(formula = targetFlag ~., data = data_train) %>%
     step_other(all_nominal(), -all_outcomes(), threshold = 0.01) %>%
     step_dummy(all_nominal(), -all_outcomes()) %>%
     step_knnimpute(all_numeric(), -all_outcomes())
@@ -312,30 +310,24 @@ tune_target_prob_xgb <- function(data) {
     resamples = data_folds,
     param_info = xgb_params,
     iter = 500,
-    metrics = metric_set(
-      roc_auc,
-      bal_accuracy,
-      f_meas,
-      accuracy,
-      kap
-    ),
-    initial = 20,
-    control = control_bayes(
-      no_improve = 200,
-      uncertain = 50,
-      save_pred = F,
-      time_limit = 600,
-      verbose = T
-    )
+    metrics = metric_set(f_meas,
+                         bal_accuracy,
+                         roc_auc,
+                         accuracy,
+                         kap),
+    initial = 14,
+    control = control_bayes(no_improve = 200,
+                            uncertain = 50,
+                            save_pred = F,
+                            time_limit = 720,
+                            verbose = T)
   )
 
   best_auc <- select_best(xgb_res, "roc_auc")
-  save(xgb_spec, xgb_res, xgb_wf, best_auc, data_folds, file = "inst/models/target_prob_xgb_xval.Rdata")
-  return(list(
-    data = data,
-    data_split = data_split,
-    workflow = xgb_wf,
-    parameters = best_auc,
-    tune_results = xgb_res
-  ))
+  save(xgb_spec, xgb_res, xgb_wf, best_auc, data_folds, data, data_split, file = 'inst/models/target_prob_xgb_xval.Rdata')
+  return(list(data = data,
+              data_split = data_split,
+              workflow = xgb_wf,
+              parameters = best_auc,
+              tune_results = xgb_res))
 }
