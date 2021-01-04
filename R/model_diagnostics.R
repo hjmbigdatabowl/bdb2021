@@ -2,7 +2,6 @@
 #' @param train the training set
 #' @param test the test set
 #' @param xgb_model the xgboost model
-#' @param logit_model the logit model used for Platt scaling
 #' @return A success string
 #' @importFrom magrittr %>%
 #' @importFrom rlang .data
@@ -18,12 +17,12 @@
 #' @import ggplot2
 #' @import dplyr
 #' @export
-catch_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model) {
+catch_prob_diagnostic_plots <- function(train, test, xgb_model) {
   . <- NULL
   preds <- train %>%
     mutate(
       target = as.factor(.data$outcome),
-      calibratedprob = stepwise_catch_prob_predict(., xgb_model, logit_model)
+      calibratedprob = stepwise_catch_prob_predict(., xgb_model)
     )
 
   preds %>%
@@ -41,7 +40,7 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model) {
   results <- test %>%
     mutate(
       target = as.factor(.data$outcome),
-      predprob = stepwise_catch_prob_predict(., xgb_model, logit_model),
+      predprob = stepwise_catch_prob_predict(., xgb_model),
       pred_outcome = ifelse(.data$predprob > THRESHOLD_TO_USE, "Complete", "Incomplete")
     )
 

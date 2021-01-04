@@ -8,8 +8,18 @@
 run_catch_prob_tuning_pipeline <- function(throw_or_arr = "") {
   set.seed(14159)
   df <- switch (throw_or_arr,
-                't' = do_catch_prob_throw_feat_eng(),
-                'a' = do_catch_prob_arrival_feat_eng()
+                't' = do_catch_prob_throw_feat_eng() %>%
+                  select(
+                    .data$dist_to_def_1:.data$veloToIntercept_def_11, .data$max_throw_velo, .data$throwdist,
+                    .data$numberOfPassRushers, .data$targetXThrow, .data$targetYThrow, .data$footballXArr, .data$footballYArr,
+                    .data$conditions, .data$temperature, .data$targetSThrow, .data$targetAThrow, .data$skill, .data$height, .data$outcome
+                  ),
+                'a' = do_catch_prob_arrival_feat_eng() %>%
+                  select(
+                    .data$dist_to_def_1:.data$grouped_def_pos_11, .data$max_throw_velo, .data$throwdist,
+                    .data$numberOfPassRushers, .data$targetXArrival, .data$targetYArrival, .data$footballXArr, .data$footballYArr,
+                    .data$conditions, .data$temperature, .data$targetSArrival, .data$targetAArrival, .data$skill, .data$height, .data$outcome
+                  )
               )
 
   train <- df %>%
@@ -18,16 +28,16 @@ run_catch_prob_tuning_pipeline <- function(throw_or_arr = "") {
   test <- df %>%
     setdiff(train)
 
-  catch_prob_tuning_results <- tune_catch_prob_xgb(train)
+  catch_prob_tuning_results <- tune_catch_prob_xgb(train, mod = throw_or_arr)
   catch_prob_model <- fit_catch_prob_xgb(
     workflow = catch_prob_tuning_results$workflow,
     pars = catch_prob_tuning_results$parameters,
     data_split = catch_prob_tuning_results$data_split,
-    data = catch_prob_tuning_results$data
+    data = catch_prob_tuning_results$data,
+    mod = throw_or_arr
   )
-  logit_model <- fit_logit_platt_scaler(catch_prob_model$final_xgb, train)
-  catch_prob_diagnostic_plots(train, test, catch_prob_model$final_xgb, logit_model)
-  make_catch_prob_table(df, catch_prob_model$final_xgb, logit_model, 1000, 50, TRUE)
+  catch_prob_diagnostic_plots(train, test, catch_prob_model$final_xgb)
+  make_catch_prob_table(1000, 50, TRUE)
 }
 
 #' run_target_prob_tuning_pipeline pipeline for target prob model

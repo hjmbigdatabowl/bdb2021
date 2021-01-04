@@ -454,7 +454,11 @@ do_catch_prob_throw_feat_eng <- function(weeks_to_use = 1:17) {
     left_join(football_locations_at_arrival, by = c("gameId", "playId")) %>%
     left_join(target_position_at_throw, by = c("gameId", "playId")) %>%
     left_join(receiver_skill, by = c("targetNflId" = "nflId")) %>%
-    left_join(heights, by = c("targetNflId" = "nflId"))
+    left_join(heights, by = c("targetNflId" = "nflId")) %>%
+    distinct() %>%
+    group_by(.data$gameId, .data$playId) %>%
+    filter(n() == 1) %>%
+    ungroup()
 
   save_encrypted(df, file = "inst/data/catch_prob_features_throw.Rdata")
   return(df)

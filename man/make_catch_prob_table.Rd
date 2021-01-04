@@ -4,22 +4,9 @@
 \alias{make_catch_prob_table}
 \title{make_catch_prob_table makes the drops added table}
 \usage{
-make_catch_prob_table(
-  data,
-  xgb_model,
-  logit_model,
-  num = 1000,
-  playcutoff = 300,
-  show_top = TRUE
-)
+make_catch_prob_table(num = 1000, playcutoff = 300, show_top = TRUE)
 }
 \arguments{
-\item{data}{the data to use to build the table}
-
-\item{xgb_model}{the xgboost model}
-
-\item{logit_model}{the logit model for platt scaling}
-
 \item{num}{the number of players to include in the table (default: 1000)}
 
 \item{playcutoff}{the min number of plays (default: 300)}

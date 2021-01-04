@@ -215,8 +215,6 @@ do_catch_prob_arrival_feat_eng <- function(weeks_to_use = 1:17) {
       across(c(starts_with("dist_to_def")), function(x) ifelse(is.na(x), 999, x)),
       across(starts_with("grouped_def_pos"), function(x) ifelse(is.na(x), "Line", x))
     ) %>%
-    group_by(.data$gameId, .data$playId) %>%
-    filter(n() == 1) %>%
     ungroup() %>%
     left_join(play_data, by = c("gameId", "playId")) %>%
     rowwise() %>%
@@ -234,7 +232,11 @@ do_catch_prob_arrival_feat_eng <- function(weeks_to_use = 1:17) {
     left_join(football_locations_at_arrival, by = c("gameId", "playId")) %>%
     left_join(target_position_at_arrival, by = c("gameId", "playId")) %>%
     left_join(receiver_skill, by = c("targetNflId" = "nflId")) %>%
-    left_join(heights, by = c("targetNflId" = "nflId"))
+    left_join(heights, by = c("targetNflId" = "nflId")) %>%
+    distinct() %>%
+    group_by(.data$gameId, .data$playId) %>%
+    filter(n() == 1) %>%
+    ungroup()
 
   save_encrypted(df, file = "inst/data/catch_prob_features_arrival.Rdata")
   return(df)
