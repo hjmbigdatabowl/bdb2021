@@ -36,7 +36,7 @@ run_catch_prob_tuning_pipeline <- function(throw_or_arr = "") {
     data = catch_prob_tuning_results$data,
     mod = throw_or_arr
   )
-  catch_prob_diagnostic_plots(train, test, catch_prob_model$final_xgb, throw_r_arr)
+  catch_prob_diagnostic_plots(train, test, catch_prob_model$final_xgb, throw_or_arr)
 
   return(invisible(NULL))
 }

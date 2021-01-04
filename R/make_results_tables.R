@@ -61,6 +61,7 @@ gt_theme_538 <- function(data, ...) {
 #' @export
 #'
 make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE) {
+  . <- NULL
   teams_colors_logos <- NULL
   final_xgb <- NULL
 
@@ -71,11 +72,10 @@ make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE)
   throw_xgb <- final_xgb
   rm(final_xgb)
 
-  arrival_data <- do_catch_prob_arrival_feat_eng()
-  throw_data <- do_catch_prob_throw_feat_eng()
-
-  arrival_preds <- stepwise_catch_prob_predict(arrival_data, arrival_xgb)
-  throw_preds <- stepwise_catch_prob_predict(throw_data, throw_xgb)
+  arrival_data <- do_catch_prob_arrival_feat_eng(1) %>%
+    mutate(arrival_preds = stepwise_catch_prob_predict(., arrival_xgb))
+  throw_data <- do_catch_prob_throw_feat_eng(1) %>%
+    mutate(throw_preds = stepwise_catch_prob_predict(., throw_xgb))
 
   data("teams_colors_logos", envir = environment())
 
@@ -141,9 +141,8 @@ make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE)
 
   arrival_results <- arrival_data %>%
     mutate(
-      preds = arrival_preds,
       numeric_outcome = ifelse(.data$outcome == "Complete", 1, 0),
-      marginal = .data$preds - .data$numeric_outcome
+      marginal = .data$arrival_preds - .data$numeric_outcome
     ) %>%
     select(.data$gameId, .data$playId, .data$marginal, .data$nflId_def_1:.data$nflId_def_11) %>%
     pivot_longer(
@@ -225,10 +224,9 @@ make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE)
     gt_theme_538()
 
   throw_results <- throw_data %>%
+    left_join(arrival_data %>% select(.data$gameId, .data$playId, .data$arrival_preds), by = c('gameId', 'playId')) %>%
     mutate(
-      preds = throw_preds,
-      numeric_outcome = arrival_preds,
-      marginal = .data$preds - .data$numeric_outcome
+      marginal = .data$throw_preds - .data$arrival_preds
     ) %>%
     select(.data$gameId, .data$playId, .data$marginal, .data$nflId_def_1:.data$nflId_def_11) %>%
     pivot_longer(
@@ -254,6 +252,7 @@ make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE)
 
   throw_tab <- throw_results %>%
     filter(.data$plays > playcutoff) %>%
+    drop_na(.data$drops_added_throw) %>%
     left_join(defender_teams, by = "nflId") %>%
     left_join(
       teams_colors_logos %>% select(.data$team_abbr, .data$team_logo_espn),
