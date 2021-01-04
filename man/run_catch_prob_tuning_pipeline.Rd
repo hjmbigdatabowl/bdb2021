@@ -10,7 +10,7 @@ run_catch_prob_tuning_pipeline(throw_or_arr = "")
 \item{throw_or_arr}{the model (throwtime "t" or arrival time "a" to tune)}
 }
 \value{
-the full df
+null
 }
 \description{
 run_catch_prob_tuning_pipeline runs the catch prob tuning pipeline
