@@ -47,6 +47,8 @@ gt_theme_538 <- function(data, ...) {
 
 #' make_catch_prob_table makes the drops added table
 #' @return list: the table in data frame form and gt form
+#' @param arrival_data the df from arrival time feat eng
+#' @param throw_data the df from throw time feat eng
 #' @param num the number of players to include in the table (default: 1000)
 #' @param playcutoff the min number of plays (default: 300)
 #' @param show_top True sorts by the top players, False sorts by the worst

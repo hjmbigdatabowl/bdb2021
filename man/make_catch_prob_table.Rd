@@ -13,6 +13,10 @@ make_catch_prob_table(
 )
 }
 \arguments{
+\item{arrival_data}{the df from arrival time feat eng}
+
+\item{throw_data}{the df from throw time feat eng}
+
 \item{num}{the number of players to include in the table (default: 1000)}
 
 \item{playcutoff}{the min number of plays (default: 300)}
