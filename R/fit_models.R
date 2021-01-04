@@ -21,7 +21,7 @@ fit_catch_prob_xgb <- function(workflow, pars, data_split, data, mod) {
 
   final_res <- tune::last_fit(final_xgb, data_split)
 
-  save(data, final_xgb, final_res, file = glue("inst/models/catch_prob_{mod}_xgb.Rdata"))
+  save(final_xgb, file = glue("inst/models/catch_prob_{mod}_xgb.Rdata"))
 
   return(list(
     final_xgb = final_xgb,

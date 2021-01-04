@@ -4,7 +4,13 @@
 \alias{make_catch_prob_table}
 \title{make_catch_prob_table makes the drops added table}
 \usage{
-make_catch_prob_table(num = 1000, playcutoff = 300, show_top = TRUE)
+make_catch_prob_table(
+  arrival_data,
+  throw_data,
+  num = 1000,
+  playcutoff = 300,
+  show_top = TRUE
+)
 }
 \arguments{
 \item{num}{the number of players to include in the table (default: 1000)}

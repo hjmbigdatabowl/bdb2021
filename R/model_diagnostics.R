@@ -58,7 +58,7 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, mod = '') {
   )
 
 
-  jpeg("inst/plots/cdplot_{mod}.jpg", width = 350, height = 300)
+  jpeg(glue("inst/plots/cdplot_{mod}.jpg"), width = 350, height = 300)
   cdplot(results$predprob, as.factor(results$target))
   dev.off()
 
@@ -110,10 +110,10 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, mod = '') {
       vip(40)
   )
 
-  ggsave("roc_plot_{mod}.png", roc_plot, device = "png", path = "inst/plots/")
-  ggsave("calplot_{mod}.png", calplot, device = "png", path = "inst/plots/")
-  ggsave("varimp_{mod}.png", varimp, device = "png", path = "inst/plots/")
-  write.csv(metrics, "inst/plots/metrics_{mod}.csv", row.names = F)
+  ggsave(glue("roc_plot_{mod}.png"), roc_plot, device = "png", path = "inst/plots/")
+  ggsave(glue("calplot_{mod}.png"), calplot, device = "png", path = "inst/plots/")
+  ggsave(glue("varimp_{mod}.png"), varimp, device = "png", path = "inst/plots/")
+  write.csv(metrics, glue("inst/plots/metrics_{mod}.csv"), row.names = F)
   return("plots updated and saved in plots/ dir")
 }
 
