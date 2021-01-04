@@ -53,16 +53,15 @@ get_football_location_at_arrival <- function(pbp) {
 #' get_defense_locs_at_arrival returns a data from of the locations of the defense at throw time
 #' @return a data frame with the locations of the defenders at throw time
 #' @param player_locs_at_arrival a data frame of player locations at throw time
-#' @param throw_vectors the throw vectors
 #' @importFrom magrittr %>%
 #' @importFrom dplyr select filter mutate select rename_with group_by
 #' @importFrom rlang .data
 #'
-get_defense_locs_at_arrival <- function(player_locs_at_throw) {
+get_defense_locs_at_arrival <- function(player_locs_at_arrival) {
   . <- NULL
   DEFENSE_POSITIONS <- get_constants("defense_positions")
 
-  player_locs_at_throw %>%
+  player_locs_at_arrival %>%
     filter(.data$position %in% DEFENSE_POSITIONS) %>%
     select(.data$gameId, .data$playId, .data$frameId, .data$nflId, .data$x, .data$y) %>%
     select(

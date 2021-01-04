@@ -4,12 +4,10 @@
 \alias{get_defense_locs_at_arrival}
 \title{get_defense_locs_at_arrival returns a data from of the locations of the defense at throw time}
 \usage{
-get_defense_locs_at_arrival(player_locs_at_throw)
+get_defense_locs_at_arrival(player_locs_at_arrival)
 }
 \arguments{
 \item{player_locs_at_arrival}{a data frame of player locations at throw time}
-
-\item{throw_vectors}{the throw vectors}
 }
 \value{
 a data frame with the locations of the defenders at throw time
