@@ -94,7 +94,7 @@ tune_catch_prob_xgb <- function(data, mod = '', overnightmode = FALSE) {
       accuracy,
       kap
     ),
-    initial = 5,
+    initial = 25,
     control = control_bayes(
       no_improve = 200,
       uncertain = 50,
