@@ -72,9 +72,9 @@ make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE)
   throw_xgb <- final_xgb
   rm(final_xgb)
 
-  arrival_data <- do_catch_prob_arrival_feat_eng(1) %>%
+  arrival_data <- do_catch_prob_arrival_feat_eng() %>%
     mutate(arrival_preds = stepwise_catch_prob_predict(., arrival_xgb))
-  throw_data <- do_catch_prob_throw_feat_eng(1) %>%
+  throw_data <- do_catch_prob_throw_feat_eng() %>%
     mutate(throw_preds = stepwise_catch_prob_predict(., throw_xgb))
 
   data("teams_colors_logos", envir = environment())
