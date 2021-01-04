@@ -1,12 +1,17 @@
 #' run_catch_prob_tuning_pipeline runs the catch prob tuning pipeline
-#' @return data.frame: normalized positional data
+#' @return NULL (invisible)
+#' @param throw_or_arr the model (throwtime "t" or arrival time "a" to tune)
 #' @importFrom magrittr %>%
 #' @importFrom dplyr sample_frac setdiff
 #' @export
 #'
-run_catch_prob_tuning_pipeline <- function() {
+run_catch_prob_tuning_pipeline <- function(throw_or_arr = "") {
   set.seed(14159)
-  df <- do_catch_prob_feat_eng()
+  df <- switch (throw_or_arr,
+                't' = do_catch_prob_throw_feat_eng(),
+                'a' = do_catch_prob_arrival_feat_eng()
+              )
+
   train <- df %>%
     sample_frac(.8)
 

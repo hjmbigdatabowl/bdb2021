@@ -272,7 +272,7 @@ add_throw_vector_to_positions <- function(release_positions, throw_vectors) {
   )
 }
 
-#' do_catch_prob_feat_eng build a data frame of catch prob features
+#' do_catch_prob_throw_feat_eng build a data frame of catch prob features
 #'
 #' @param weeks_to_use Numeric: a numeric vector of weeks to use (default 1:17)
 #' @return a data frame of features
@@ -287,7 +287,7 @@ add_throw_vector_to_positions <- function(release_positions, throw_vectors) {
 #' @import dplyr
 #' @export
 #'
-do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
+do_catch_prob_throw_feat_eng <- function(weeks_to_use = 1:17) {
   . <- NULL
   nonweek <- read_non_week_files()
   targeted_receiver <- get_targeted_receiver()
@@ -456,7 +456,7 @@ do_catch_prob_feat_eng <- function(weeks_to_use = 1:17) {
     left_join(receiver_skill, by = c("targetNflId" = "nflId")) %>%
     left_join(heights, by = c("targetNflId" = "nflId"))
 
-  save_encrypted(df, file = "inst/data/catch_prob_features.Rdata")
+  save_encrypted(df, file = "inst/data/catch_prob_features_throw.Rdata")
   return(df)
 }
 

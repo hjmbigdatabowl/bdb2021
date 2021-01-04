@@ -4,10 +4,13 @@
 \alias{run_catch_prob_tuning_pipeline}
 \title{run_catch_prob_tuning_pipeline runs the catch prob tuning pipeline}
 \usage{
-run_catch_prob_tuning_pipeline()
+run_catch_prob_tuning_pipeline(throw_or_arr = "")
+}
+\arguments{
+\item{throw_or_arr}{the model (throwtime "t" or arrival time "a" to tune)}
 }
 \value{
-data.frame: normalized positional data
+NULL (invisible)
 }
 \description{
 run_catch_prob_tuning_pipeline runs the catch prob tuning pipeline
