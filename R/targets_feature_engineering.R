@@ -66,10 +66,12 @@ add_receiver_target_rates <- function(df) {
 #' @importFrom purrr map
 #' @importFrom rlang .data
 #' @importFrom dplyr left_join inner_join mutate bind_rows filter select group_by summarize rename slice ungroup
-#' @import nflfastR
+#' @importFrom stats complete.cases
 #' @export
 #'
 do_target_prob_feature_eng <- function(weeks_to_use = 1:17) {
+  . <- NULL
+
   # get game & play meta, combine into one df
   nonweek <- read_non_week_files()
   play_metadata <- nonweek$plays
@@ -244,8 +246,8 @@ do_target_prob_feature_eng <- function(weeks_to_use = 1:17) {
       receiverPosition = ifelse(.data$receiverPosition == "HB", "RB", .data$receiverPosition),
       oAdj = atan2(.data$xAdj, .data$yAdj) * 180 / pi
     ) %>%
-    filter(!is.na(.data$oAdj)) %>%
-    left_join(weather, by = "gameId")
+    filter(complete.cases(.)) %>%
+    left_join(weather, by = 'gameId')
 
   throw_target_data <- add_receiver_target_rates(throw_target_data)
 

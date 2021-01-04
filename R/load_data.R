@@ -69,3 +69,18 @@ aggregate_week_files <- function() {
 read_targets <- function() {
   read_csv("inst/data/targetedReceiver.csv", col_types = cols())
 }
+
+#' read_pff load PFF grades
+#'
+#' @importFrom readr read_csv
+#' @importFrom magrittr %>%
+#' @importFrom dplyr mutate case_when
+read_pff <- function() {
+  read_csv('inst/data/defense_summary.csv', col_types = cols()) %>%
+    mutate(team_name = case_when(
+      team_name == 'HST' ~ 'HOU',
+      team_name == 'BLT' ~ 'BAL',
+      team_name == 'CLV' ~  'CLE',
+      team_name == 'ARZ' ~ 'ARI',
+      T ~ team_name))
+}
