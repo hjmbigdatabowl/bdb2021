@@ -99,7 +99,7 @@ tune_catch_prob_xgb <- function(data, mod = '', overnightmode = FALSE) {
       no_improve = 200,
       uncertain = 50,
       save_pred = F,
-      time_limit = 250,
+      time_limit = 200,
       verbose = T
     )
   )
