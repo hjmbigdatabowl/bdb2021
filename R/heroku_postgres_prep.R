@@ -12,11 +12,17 @@ heroku_postgres_inserts <- function() {
 
   results <- NULL
   model_preds <- NULL
-  load("~/documents/github/bdb2021shiny/model_data/drops_added.Rdata")
-  df <- results %>%
-    arrange(desc(.data$drops_added))
+  load("~/documents/github/bdb2021/inst/data/drops_added_arrival.Rdata")
+  df <- arrival_results %>%
+    arrange(desc(.data$drops_added_arrival))
 
-  dbWriteTable(engine, name = 'drops_added', df)
+  dbWriteTable(engine, name = 'drops_added_arrival', df)
+
+  load("~/documents/github/bdb2021/inst/data/drops_added_throw.Rdata")
+  df <- throw_results %>%
+    arrange(desc(.data$drops_added_throw))
+
+  dbWriteTable(engine, name = 'drops_added_throw', df)
 
   load("~/documents/github/bdb2021shiny/model_data/catch_prob_preds.Rdata")
   df <- load_encrypted("~/documents/github/bdb2021shiny/model_data/catch_prob_features.Rdata") %>%
