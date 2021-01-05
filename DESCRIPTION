@@ -43,7 +43,10 @@ Imports:
     rstudioapi (>= 0.13),
     scales (>= 1.1.1),
     cyphr,
-    sodium (>= 1.1)
+    sodium (>= 1.1),
+    RPostgres (>= 1.2.1),
+    rjson (>= 0.2.20),
+    DBI (>= 1.1.0)
 Suggests: 
     covr,
     rmarkdown,
