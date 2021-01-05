@@ -124,30 +124,11 @@
     <p>make_catch_prob_table makes the drops added table</p>
     </div>
 
-    <pre class="usage"><span class='fu'>make_catch_prob_table</span><span class='op'>(</span>
-  <span class='va'>data</span>,
-  <span class='va'>xgb_model</span>,
-  <span class='va'>logit_model</span>,
-  num <span class='op'>=</span> <span class='fl'>1000</span>,
-  playcutoff <span class='op'>=</span> <span class='fl'>300</span>,
-  show_top <span class='op'>=</span> <span class='cn'>TRUE</span>
-<span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>make_catch_prob_table</span><span class='op'>(</span>num <span class='op'>=</span> <span class='fl'>1000</span>, playcutoff <span class='op'>=</span> <span class='fl'>300</span>, show_top <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>data</th>
-      <td><p>the data to use to build the table</p></td>
-    </tr>
-    <tr>
-      <th>xgb_model</th>
-      <td><p>the xgboost model</p></td>
-    </tr>
-    <tr>
-      <th>logit_model</th>
-      <td><p>the logit model for platt scaling</p></td>
-    </tr>
     <tr>
       <th>num</th>
       <td><p>the number of players to include in the table (default: 1000)</p></td>

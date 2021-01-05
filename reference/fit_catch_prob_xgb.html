@@ -124,7 +124,7 @@
     <p>fit_catch_prob_xgb fit the xgboost catch prob model</p>
     </div>
 
-    <pre class="usage"><span class='fu'>fit_catch_prob_xgb</span><span class='op'>(</span><span class='va'>workflow</span>, <span class='va'>pars</span>, <span class='va'>data_split</span>, <span class='va'>data</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>fit_catch_prob_xgb</span><span class='op'>(</span><span class='va'>workflow</span>, <span class='va'>pars</span>, <span class='va'>data_split</span>, <span class='va'>data</span>, <span class='va'>mod</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -144,6 +144,10 @@
     <tr>
       <th>data</th>
       <td><p>a full data frame to fit the model on</p></td>
+    </tr>
+    <tr>
+      <th>mod</th>
+      <td><p>the name of the model ('a' for arrival, 't' for throw)</p></td>
     </tr>
     </table>
 

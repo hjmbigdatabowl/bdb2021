@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>run_catch_prob_tuning_pipeline runs the catch prob tuning pipeline — run_catch_prob_tuning_pipeline • bdb2021</title>
+<title>get_target_location_at_arrival returns a data frame of the locations of the targeted receiver at throw time on each play — get_target_location_at_arrival • bdb2021</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="run_catch_prob_tuning_pipeline runs the catch prob tuning pipeline — run_catch_prob_tuning_pipeline" />
-<meta property="og:description" content="run_catch_prob_tuning_pipeline runs the catch prob tuning pipeline" />
+<meta property="og:title" content="get_target_location_at_arrival returns a data frame of the locations of the targeted receiver at throw time on each play — get_target_location_at_arrival" />
+<meta property="og:description" content="get_target_location_at_arrival returns a data frame of the locations of the targeted receiver at throw time on each play" />
 
 
 
@@ -115,41 +115,37 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>run_catch_prob_tuning_pipeline runs the catch prob tuning pipeline</h1>
+    <h1>get_target_location_at_arrival returns a data frame of the locations of the targeted receiver at throw time on each play</h1>
     
-    <div class="hidden name"><code>run_catch_prob_tuning_pipeline.Rd</code></div>
+    <div class="hidden name"><code>get_target_location_at_arrival.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>run_catch_prob_tuning_pipeline runs the catch prob tuning pipeline</p>
+    <p>get_target_location_at_arrival returns a data frame of the locations of the targeted receiver at throw time on each play</p>
     </div>
 
-    <pre class="usage"><span class='fu'>run_catch_prob_tuning_pipeline</span><span class='op'>(</span>
-  throw_or_arr <span class='op'>=</span> <span class='st'>""</span>,
-  overnightmode <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  overnightcores <span class='op'>=</span> <span class='fl'>4</span>
-<span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>get_target_location_at_arrival</span><span class='op'>(</span><span class='va'>pbp</span>, <span class='va'>football_data</span>, <span class='va'>targeted_receiver</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>throw_or_arr</th>
-      <td><p>the model (throwtime "t" or arrival time "a" to tune)</p></td>
+      <th>pbp</th>
+      <td><p>a dataframe of play-by-play data</p></td>
     </tr>
     <tr>
-      <th>overnightmode</th>
-      <td><p>TRUE auto sets 4 cores</p></td>
+      <th>football_data</th>
+      <td><p>the football data</p></td>
     </tr>
     <tr>
-      <th>overnightcores</th>
-      <td><p>an integer for the number of cores to run on</p></td>
+      <th>targeted_receiver</th>
+      <td><p>the targets data</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>null</p>
+    <p>a data frame with the positions</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
