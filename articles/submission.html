@@ -90,6 +90,7 @@
 <div id="modeling-framework" class="section level2">
 <h2 class="hasAnchor">
 <a href="#modeling-framework" class="anchor"></a>Modeling Framework</h2>
+<p>We opted to use XGBoost for all of our models. At a high level, the reason for this choice was the ability of a tree booster to find complex interactions between predictors, which we expected there to be many of. Tree boosting also allows for null values to be present, which was helpful in how we divvied up credit in the catch probability models (more on that later). Finally, tree boosting is a relatively simple, easy to tune algorithm that also tends to perform extremely well, as was the case for us.</p>
 </div>
 <div id="catch-probability" class="section level2">
 <h2 class="hasAnchor">
