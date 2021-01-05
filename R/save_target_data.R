@@ -4,6 +4,7 @@
 #' @param scale_model logit model used to calibrate final results
 #' @param prior_target_model model for target probability before play begins
 #' @param data dataframe with all observations from season
+#' @importFrom DBI dbWriteTable
 #' @export
 build_target_results <- function(final_model, scale_model, prior_target_model, data){
   . <- NULL
@@ -26,6 +27,8 @@ build_target_results <- function(final_model, scale_model, prior_target_model, d
     summarise(plays = n(),
               games = n_distinct(.data$gameId),
               averageSeperation = mean(.data$defDistance1),
+              averageOpennessRank = mean(.data$playOpenRank),
+              wrStrength = mean(.data$regressedTargets),
               priorExpectedTargets = sum(.data$targetPredPrior),
               preThrowExpectedTargets = sum(.data$targetPred),
               actualTargets = sum(.data$targetFlag == 1),
@@ -35,7 +38,7 @@ build_target_results <- function(final_model, scale_model, prior_target_model, d
               regressedDeterrence = .data$deterrenceTargetsAdded / sqrt(.data$plays),
               combinedGrade = .data$regressedCoverage + .data$regressedDeterrence,
               rawTargetsAdded = (.data$coverageTargetsAdded + .data$deterrenceTargetsAdded) / .data$plays) %>%
-    select(.data$defId1, .data$defendingTeam, .data$plays:.data$rawTargetsAdded) %>%
+    select(.data$defId1, .data$defendingTeam, .data$defPosition1, .data$plays:.data$rawTargetsAdded) %>%
     ungroup() %>%
     left_join(player_bio %>% select(-.data$position), by=c("defId1" = "nflId")) %>%
     left_join(pff %>%
@@ -44,11 +47,8 @@ build_target_results <- function(final_model, scale_model, prior_target_model, d
     rename(nflId = .data$defId1,
            position = .data$defPosition1)
 
-  soduim_key <- load('inst/keys/sodium_key.Rdata')
+  engine <- connect_to_heroku_postgres()
+  dbWriteTable(engine, 'target_data', with_pred)
+  dbWriteTable(engine, 'target_data_aggregated', aggregated_target_data)
 
-  df <- with_pred
-  save_encrypted(df, "inst/data/target_data.Rdata")
-
-  df <- aggregated_target_data
-  save_encrypted(df, "inst/data/target_aggregated.Rdata")
 }
