@@ -78,7 +78,7 @@ make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE)
     mutate(throw_preds = stepwise_catch_prob_predict(., throw_xgb))
 
   data("teams_colors_logos", envir = environment())
-  message('got through data load')
+
   nonweek <- read_non_week_files()
 
   arrival_credit <- divvy_credit(arrival_data, arrival_xgb)
@@ -139,6 +139,14 @@ make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE)
     distinct() %>%
     rename(team = .data$defendingTeam)
 
+  arrange_by <- function(data, show_top = show_top) {
+    if (show_top) {
+      arrange(data, rank)
+    } else {
+      arrange(data, desc(rank))
+    }
+  }
+
   arrival_results <- arrival_data %>%
     mutate(
       numeric_outcome = ifelse(.data$outcome == "Complete", 1, 0),
@@ -164,18 +172,7 @@ make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE)
     mutate(
       drops_perplay_arrival = .data$drops_added_arrival / .data$plays) %>%
     left_join(nonweek$players, by = c("nflId" = "nflId")) %>%
-    select(.data$nflId, .data$displayName, .data$position, .data$plays, .data$drops_added_arrival, .data$drops_perplay_arrival)
-
-  arrange_by <- function(data, show_top = show_top) {
-    if (show_top) {
-      arrange(data, rank)
-    } else {
-      arrange(data, desc(rank))
-    }
-  }
-
-  arrival_tab <- arrival_results %>%
-    filter(.data$plays > playcutoff) %>%
+    select(.data$nflId, .data$displayName, .data$position, .data$plays, .data$drops_added_arrival, .data$drops_perplay_arrival) %>%
     left_join(defender_teams, by = "nflId") %>%
     left_join(
       teams_colors_logos %>% select(.data$team_abbr, .data$team_logo_espn),
@@ -189,8 +186,11 @@ make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE)
     ungroup() %>%
     arrange(desc(.data$drops_added_arrival)) %>%
     mutate(rank = row_number()) %>%
-    select(.data$rank, .data$position, .data$displayName, .data$team_logo_espn, .data$plays, .data$drops_added_arrival, .data$drops_perplay_arrival) %>%
-    arrange_by(show_top) %>%
+    select(.data$rank, .data$position, .data$nflId, .data$displayName, .data$team_logo_espn, .data$plays, .data$drops_added_arrival, .data$drops_perplay_arrival) %>%
+    arrange_by(show_top)
+
+  arrival_tab <- arrival_results %>%
+    filter(.data$plays > playcutoff) %>%
     head(num) %>%
     gt() %>%
     text_transform(
@@ -248,10 +248,7 @@ make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE)
     mutate(
       drops_perplay_throw = .data$drops_added_throw / .data$plays) %>%
     left_join(nonweek$players, by = c("nflId" = "nflId")) %>%
-    select(.data$nflId, .data$displayName, .data$position, .data$plays, .data$drops_added_throw, .data$drops_perplay_throw)
-
-  throw_tab <- throw_results %>%
-    filter(.data$plays > playcutoff) %>%
+    select(.data$nflId, .data$displayName, .data$position, .data$plays, .data$drops_added_throw, .data$drops_perplay_throw) %>%
     drop_na(.data$drops_added_throw) %>%
     left_join(defender_teams, by = "nflId") %>%
     left_join(
@@ -266,8 +263,11 @@ make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE)
     ungroup() %>%
     arrange(desc(.data$drops_added_throw)) %>%
     mutate(rank = row_number()) %>%
-    select(.data$rank, .data$position, .data$displayName, .data$team_logo_espn, .data$plays, .data$drops_added_throw, .data$drops_perplay_throw) %>%
-    arrange_by(show_top) %>%
+    select(.data$rank, .data$position, .data$nflId, .data$displayName, .data$team_logo_espn, .data$plays, .data$drops_added_throw, .data$drops_perplay_throw) %>%
+    arrange_by(show_top)
+
+  throw_tab <- throw_results  %>%
+    filter(.data$plays > playcutoff) %>%
     head(num) %>%
     gt() %>%
     text_transform(

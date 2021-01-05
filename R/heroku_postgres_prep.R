@@ -16,13 +16,13 @@ heroku_postgres_inserts <- function() {
   df <- arrival_results %>%
     arrange(desc(.data$drops_added_arrival))
 
-  dbWriteTable(engine, name = 'drops_added_arrival', df)
+  dbWriteTable(engine, name = 'drops_added_arrival', df, overwrite = T)
 
   load("~/documents/github/bdb2021/inst/data/drops_added_throw.Rdata")
   df <- throw_results %>%
     arrange(desc(.data$drops_added_throw))
 
-  dbWriteTable(engine, name = 'drops_added_throw', df)
+  dbWriteTable(engine, name = 'drops_added_throw', df, overwrite = T)
 
   load("~/documents/github/bdb2021shiny/model_data/catch_prob_preds.Rdata")
   df <- load_encrypted("~/documents/github/bdb2021shiny/model_data/catch_prob_features.Rdata") %>%
@@ -51,5 +51,5 @@ heroku_postgres_inserts <- function() {
     ungroup() %>%
     left_join(model_preds %>% rename(catch_probability = .data$predprob), by = c("gameId", "playId"))
 
-  dbWriteTable(engine, 'aggregated_catch_prob_features', df)
+  dbWriteTable(engine, 'aggregated_catch_prob_features', df, overwrite = T)
 }

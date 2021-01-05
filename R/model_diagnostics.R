@@ -110,7 +110,7 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, mod = '') {
       theme(axis.title = element_text()) +
       labs(x = 'Predicted Catch Probability',
            y = 'Actual Catch Proportion',
-           title = 'Throw Time Calibration')
+           title = title)
   )
 
   (
