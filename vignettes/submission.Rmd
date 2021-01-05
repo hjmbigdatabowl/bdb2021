@@ -19,13 +19,14 @@ knitr::opts_chunk$set(
 library(bdb2021)
 ```
 
-## Intro Bit
+## Introduction
+
+The objective of our project is to measure the ability of defensive backs at different aspects of their defensive performance: deterring targets (either by reputation or through good positioning), closing down receivers, and breaking up passes. We do this by fitting four models, two for predicting the probability that a receiver will be targeted and two for predicting the probability that a pass will be caught, which we then use to aggregate the contributions of defensive backs of the course of the season.
+
+## Modeling Framework
 
 
-## High level modeling framework
-
-
-## Catch prob models
+## Catch Probability
 
 Our catch probability model has two distinct components: The catch probability at throw time -- as in, the chance that the pass is caught at the time the quarterback releases the ball -- and the catch probability at arrival time -- the chance the pass is caught at the time the ball arrives. These probabilities are clearly distinct, since a lot can happen between throw release and throw arrival. First, I'll walk through the features that are used in building each model. The sets are very similar. 
 
@@ -37,7 +38,7 @@ We can do a few particularly interesting things with the predictions from these 
 
 However, we need to come up with a clever way to divvy up the credit. In the previous example where we have to credit the defense with $.5$ drops added, *who* exactly on the defense do we give that credit to? There are a couple of heuristics that might make sense. One option would be to just split it up evenly amongst the defense, but this is a bad heuristic because clearly some defenders will have more of an impact on a pass being caught than others. We might also give all of the credit to the nearest defenders, but that would be unfair to players who are within half a yard of the play and are also affecting its outcome, but get no credit. Instead, we opt to use the model to engineer the credit each player deserves by seeing how the catch probabilities would change if we magically removed them from the field. To do this, we take each player off of the field and re-run the predictions, and see how big the magnitude of the change in catch probability is. The bigger the magnitude difference, the more credit that player gets. So if one player gets 75% of the credit for a play and the play is worth $.5$ drops added, then that player gets $.5 \cdot .75 = .375$ drops of credit, and the remaining $.125$ drops is divvied up amongst the other defenders in the same fashion.
 
-## Target Prob Models
+## Targets
 
 
 ## Further Work
