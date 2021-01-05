@@ -33,7 +33,17 @@ Our catch probability model has two distinct components: The catch probability a
 
 For the throw time model, which I might refer to as just the "throw" model, while the arrival time model is the "arrival" model, the most important predictors are things you might expect: the distance of the receiver to the closest defender, the position of the receiver in the $y$ direction (i.e. distance from the sideline), the distance of the throw, the position of the football in the $y$ direction at arrival time (this is mostly catching throws to the sideline and throw aways), the velocity of the throw, the velocity and acceleration of the targeted receiver, and a composite receiver skill metric. See the appendix for a full table of features. 
 
-These two models both perform quite well, and far better than random chance. We achieve **INSERT METRICS HERE (F, AUC for each)**
+These two models both perform quite well, and far better than random chance. We achieve **INSERT METRICS HERE (F, AUC for each)** Below are plots of the calibration of the predictions of each of the models on a held out data set.
+
+&nbsp;
+
+
+```{r, echo=FALSE,out.width="40%", out.height="30%",fig.cap="Catch Probability Model Calibration Plots",fig.show='hold',fig.align='center'}
+par(mfrow = c(1,2))
+knitr::include_graphics(c("../inst/plots/calplot_t.png", "../inst/plots/calplot_a.png"))
+```
+
+&nbsp;
 
 We can do a few particularly interesting things with the predictions from these two models in tandem. Namely, we can use the two to calculate marginal effects of the play of the defensive backs. A simple example is as follows: Imagine a throw with a catch probability of $.5$. If that throw is dropped, we should somehow credit the defense with $.5$ catches, which is the difference between $.5$, the prediction, and $0$, the true outcome. We can extend this approach into a two-step process by using the two models together. First, we can calculate the difference between the catch probability at throw time and at catch time in order to give credit to the defense for closing down a receiver after the throw has been made. In other words, if a throw has catch probability $.8$ at throw time, and that goes down to $.4$ at catch time, then we should credit the defense with $.4$ drops added from closing the receiver down. Then, we can use the same logic to credit the defense for breaking up plays by taking the difference between the catch probability at arrival time and the true outcome.
 
