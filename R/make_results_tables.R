@@ -78,7 +78,7 @@ make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE)
     mutate(throw_preds = stepwise_catch_prob_predict(., throw_xgb))
 
   data("teams_colors_logos", envir = environment())
-
+  message('got through data load')
   nonweek <- read_non_week_files()
 
   arrival_credit <- divvy_credit(arrival_data, arrival_xgb)
