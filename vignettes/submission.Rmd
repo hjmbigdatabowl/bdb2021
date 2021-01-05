@@ -63,6 +63,6 @@ Having created these models, we can estimate how a defensive back is impacting t
 
 ## Further Work
 
-There are obviously a number of things that we didn't consider or that would be interesting extensions of this project. Two obvious ones are interceptions added and fumbles added, as those are hugely impactful football plays. We also only considered raw changes (i.e. targets prevented and drops added), but using EPA added instead would certainly be a better metric. It would also be interesting to apply these models to more seasons of data to track player trajectories and to see how consistent they are across seasons.
+There are obviously a number of things that we didn't consider or that would be interesting extensions of this project. Two obvious ones are interceptions added and fumbles added, as those are hugely impactful football plays. We also only considered raw changes (i.e. targets prevented and drops added), but using EPA added instead would certainly be a better metric. It would also be interesting to test how similar our metrics are between seasons to confirm that what we're measuring is a stable skill of the defender.
 
 ## Appendix
