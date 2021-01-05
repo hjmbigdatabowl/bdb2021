@@ -15,6 +15,7 @@
 #' @importFrom grDevices dev.off jpeg
 #' @importFrom workflows pull_workflow_fit
 #' @importFrom utils write.csv
+#' @importFrom ggthemes theme_fivethirtyeight
 #' @import ggplot2
 #' @import dplyr
 #' @export
@@ -92,6 +93,8 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, mod = '') {
       select(-c(.data$FN:.data$TP))
   )
 
+  title <- if (mod == 't') 'Throw Time Calibration' else 'Arrival Time Calibration'
+
   (
     calplot <- results %>%
       mutate(predprob = round(.data$predprob * 20, digits = 0) / 20) %>%
@@ -102,7 +105,12 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, mod = '') {
       ) %>%
       ggplot(aes(.data$predprob, .data$catches, size = .data$N)) +
       geom_point() +
-      geom_abline(slope = 1, intercept = 0)
+      geom_abline(slope = 1, intercept = 0) +
+      theme_fivethirtyeight() +
+      theme(axis.title = element_text()) +
+      labs(x = 'Predicted Catch Probability',
+           y = 'Actual Catch Proportion',
+           title = 'Throw Time Calibration')
   )
 
   (
