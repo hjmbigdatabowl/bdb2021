@@ -75,6 +75,7 @@ read_targets <- function() {
 #' @importFrom readr read_csv
 #' @importFrom magrittr %>%
 #' @importFrom dplyr mutate case_when
+#' @export
 read_pff <- function() {
   read_csv('inst/data/defense_summary.csv', col_types = cols()) %>%
     mutate(team_name = case_when(
