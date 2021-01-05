@@ -4,13 +4,15 @@
 #' @param pars a tibble of the parameters (generally output from tune::select_best())
 #' @param data_split a data_split object
 #' @param data a full data frame to fit the model on
+#' @param mod the name of the model ('a' for arrival, 't' for throw)
 #' @return a list with the final xgboost model and the modeling results (auc, acc, etc.)
 #' @importFrom magrittr %>%
 #' @importFrom tune finalize_workflow last_fit
 #' @importFrom parsnip fit
+#' @importFrom glue glue
 #' @export
 #'
-fit_catch_prob_xgb <- function(workflow, pars, data_split, data) {
+fit_catch_prob_xgb <- function(workflow, pars, data_split, data, mod) {
   final_xgb <- tune::finalize_workflow(
     workflow,
     pars
@@ -19,7 +21,7 @@ fit_catch_prob_xgb <- function(workflow, pars, data_split, data) {
 
   final_res <- tune::last_fit(final_xgb, data_split)
 
-  save(final_xgb, final_res, file = "inst/models/catch_prob_xgb.Rdata")
+  save(final_xgb, file = glue("inst/models/catch_prob_{mod}_xgb.Rdata"))
 
   return(list(
     final_xgb = final_xgb,
@@ -144,7 +146,6 @@ fit_logit_target_platt_scaler <- function(model, data) {
 #'
 #' @param data a data frame
 #' @param xgb_model the xgboost (parsnip) model
-#' @param logit_model the logistic regression (parsnip) model
 #' @return a vector of predicted probabilities
 #' @importFrom magrittr %>%
 #' @importFrom parsnip predict.model_fit
@@ -153,11 +154,10 @@ fit_logit_target_platt_scaler <- function(model, data) {
 #' @importFrom stats predict
 #' @export
 #'
-stepwise_catch_prob_predict <- function(data, xgb_model, logit_model) {
+stepwise_catch_prob_predict <- function(data, xgb_model) {
   . <- NULL
   preds <- data %>%
-    mutate(predprob = predict(xgb_model, ., type = "prob")$.pred_Complete) %>%
-    mutate(calibratedprob = predict(logit_model, ., type = "prob")$.pred_Complete)
+    mutate(predprob = predict(xgb_model, ., type = "prob")$.pred_Complete)
 
   return(preds$predprob)
 }

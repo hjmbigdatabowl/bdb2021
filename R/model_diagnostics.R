@@ -2,7 +2,7 @@
 #' @param train the training set
 #' @param test the test set
 #' @param xgb_model the xgboost model
-#' @param logit_model the logit model used for Platt scaling
+#' @param mod 'a' for arrival, 't' for throw
 #' @return A success string
 #' @importFrom magrittr %>%
 #' @importFrom rlang .data
@@ -18,12 +18,12 @@
 #' @import ggplot2
 #' @import dplyr
 #' @export
-catch_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model) {
+catch_prob_diagnostic_plots <- function(train, test, xgb_model, mod = '') {
   . <- NULL
   preds <- train %>%
     mutate(
       target = as.factor(.data$outcome),
-      calibratedprob = stepwise_catch_prob_predict(., xgb_model, logit_model)
+      calibratedprob = stepwise_catch_prob_predict(., xgb_model)
     )
 
   preds %>%
@@ -41,7 +41,7 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model) {
   results <- test %>%
     mutate(
       target = as.factor(.data$outcome),
-      predprob = stepwise_catch_prob_predict(., xgb_model, logit_model),
+      predprob = stepwise_catch_prob_predict(., xgb_model),
       pred_outcome = ifelse(.data$predprob > THRESHOLD_TO_USE, "Complete", "Incomplete")
     )
 
@@ -58,7 +58,7 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model) {
   )
 
 
-  jpeg("inst/plots/cdplot.jpg", width = 350, height = 300)
+  jpeg(glue("inst/plots/cdplot_{mod}.jpg"), width = 350, height = 300)
   cdplot(results$predprob, as.factor(results$target))
   dev.off()
 
@@ -110,10 +110,10 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model) {
       vip(40)
   )
 
-  ggsave("roc_plot.png", roc_plot, device = "png", path = "inst/plots/")
-  ggsave("calplot.png", calplot, device = "png", path = "inst/plots/")
-  ggsave("varimp.png", varimp, device = "png", path = "inst/plots/")
-  write.csv(metrics, "inst/plots/metrics.csv", row.names = F)
+  ggsave(glue("roc_plot_{mod}.png"), roc_plot, device = "png", path = "inst/plots/")
+  ggsave(glue("calplot_{mod}.png"), calplot, device = "png", path = "inst/plots/")
+  ggsave(glue("varimp_{mod}.png"), varimp, device = "png", path = "inst/plots/")
+  write.csv(metrics, glue("inst/plots/metrics_{mod}.csv"), row.names = F)
   return("plots updated and saved in plots/ dir")
 }
 

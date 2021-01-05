@@ -47,9 +47,6 @@ gt_theme_538 <- function(data, ...) {
 
 #' make_catch_prob_table makes the drops added table
 #' @return list: the table in data frame form and gt form
-#' @param data the data to use to build the table
-#' @param xgb_model the xgboost model
-#' @param logit_model the logit model for platt scaling
 #' @param num the number of players to include in the table (default: 1000)
 #' @param playcutoff the min number of plays (default: 300)
 #' @param show_top True sorts by the top players, False sorts by the worst
@@ -63,18 +60,32 @@ gt_theme_538 <- function(data, ...) {
 #' @import gt
 #' @export
 #'
-make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, playcutoff = 300, show_top = TRUE) {
+make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE) {
+  . <- NULL
   teams_colors_logos <- NULL
+  final_xgb <- NULL
 
-  preds <- stepwise_catch_prob_predict(data, xgb_model, logit_model)
+  load("inst/models/catch_prob_a_xgb.Rdata")
+  arrival_xgb <- final_xgb
+
+  load("inst/models/catch_prob_t_xgb.Rdata")
+  throw_xgb <- final_xgb
+  rm(final_xgb)
+
+  arrival_data <- do_catch_prob_arrival_feat_eng() %>%
+    mutate(arrival_preds = stepwise_catch_prob_predict(., arrival_xgb))
+  throw_data <- do_catch_prob_throw_feat_eng() %>%
+    mutate(throw_preds = stepwise_catch_prob_predict(., throw_xgb))
+
   data("teams_colors_logos", envir = environment())
-
+  message('got through data load')
   nonweek <- read_non_week_files()
 
-  credit <- divvy_credit(data, xgb_model, logit_model)
+  arrival_credit <- divvy_credit(arrival_data, arrival_xgb)
+  throw_credit <- divvy_credit(throw_data, throw_xgb)
 
-  ids <- data %>%
-    left_join(credit, by = c("gameId", "playId")) %>%
+  throw_ids <- throw_data %>%
+    left_join(throw_credit, by = c("gameId", "playId")) %>%
     select(.data$gameId, .data$playId, .data$nflId_def_1:.data$nflId_def_11) %>%
     pivot_longer(-c(.data$gameId, .data$playId),
       names_to = "defender",
@@ -82,8 +93,17 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
     ) %>%
     mutate(defender = str_sub(.data$defender, 11L, -1L))
 
-  creds <- data %>%
-    left_join(credit, by = c("gameId", "playId")) %>%
+  arrival_ids <- arrival_data %>%
+    left_join(arrival_credit, by = c("gameId", "playId")) %>%
+    select(.data$gameId, .data$playId, .data$nflId_def_1:.data$nflId_def_11) %>%
+    pivot_longer(-c(.data$gameId, .data$playId),
+      names_to = "defender",
+      values_to = "nflId"
+    ) %>%
+    mutate(defender = str_sub(.data$defender, 11L, -1L))
+
+  throw_creds <- throw_data %>%
+    left_join(throw_credit, by = c("gameId", "playId")) %>%
     select(.data$gameId, .data$playId, .data$def_1:.data$def_11) %>%
     pivot_longer(-c(.data$gameId, .data$playId),
       names_to = "defender",
@@ -91,10 +111,17 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
     ) %>%
     mutate(defender = str_sub(.data$defender, 5L, -1L))
 
-  all_credit <- left_join(ids, creds, by = c("gameId", "playId", "defender"))
+  arrival_creds <- arrival_data %>%
+    left_join(arrival_credit, by = c("gameId", "playId")) %>%
+    select(.data$gameId, .data$playId, .data$def_1:.data$def_11) %>%
+    pivot_longer(-c(.data$gameId, .data$playId),
+      names_to = "defender",
+      values_to = "credit"
+    ) %>%
+    mutate(defender = str_sub(.data$defender, 5L, -1L))
 
-  epas <- nonweek$plays %>%
-    select(.data$gameId, .data$playId, .data$epa)
+  all_throw_credit <- left_join(throw_ids, throw_creds, by = c("gameId", "playId", "defender"))
+  all_arrival_credit <- left_join(arrival_ids, arrival_creds, by = c("gameId", "playId", "defender"))
 
   play_metadata <- nonweek$plays %>%
     left_join(nonweek$games, by = "gameId") %>%
@@ -102,7 +129,7 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
     select(.data$gameId, .data$playId, .data$defendingTeam) %>%
     distinct()
 
-  defender_teams <- data %>%
+  defender_teams <- throw_data %>%
     select(.data$gameId, .data$playId, .data$nflId_def_1:.data$nflId_def_11) %>%
     pivot_longer(cols = c(.data$nflId_def_1:.data$nflId_def_11), names_to = "pos", values_to = "nflId") %>%
     select(.data$gameId, .data$playId, .data$nflId) %>%
@@ -112,11 +139,10 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
     distinct() %>%
     rename(team = .data$defendingTeam)
 
-  results <- data %>%
+  arrival_results <- arrival_data %>%
     mutate(
-      preds = preds,
       numeric_outcome = ifelse(.data$outcome == "Complete", 1, 0),
-      marginal = .data$numeric_outcome - .data$preds
+      marginal = .data$arrival_preds - .data$numeric_outcome
     ) %>%
     select(.data$gameId, .data$playId, .data$marginal, .data$nflId_def_1:.data$nflId_def_11) %>%
     pivot_longer(
@@ -126,24 +152,19 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
     ) %>%
     select(-.data$nflId) %>%
     mutate(defender = str_sub(.data$defender, 11L, -1L)) %>%
-    left_join(all_credit, by = c("gameId", "playId", "defender")) %>%
-    left_join(epas, by = c("gameId", "playId")) %>%
+    left_join(all_arrival_credit, by = c("gameId", "playId", "defender")) %>%
     distinct() %>%
     drop_na(.data$nflId) %>%
-    mutate(drops_added = .data$credit * .data$marginal) %>%
+    mutate(drops_added_arrival = .data$credit * .data$marginal) %>%
     group_by(.data$nflId) %>%
     summarize(
-      drops_added = sum(.data$drops_added),
-      epa_added = sum(.data$epa),
+      drops_added_arrival = sum(.data$drops_added_arrival),
       plays = n(), .groups = "drop"
     ) %>%
     mutate(
-      drops_perplay = .data$drops_added / .data$plays,
-      epa_perplay = .data$epa_added / .data$plays
-    ) %>%
+      drops_perplay_arrival = .data$drops_added_arrival / .data$plays) %>%
     left_join(nonweek$players, by = c("nflId" = "nflId")) %>%
-    arrange(desc(.data$epa_perplay)) %>%
-    select(.data$nflId, .data$displayName, .data$position, .data$plays, .data$drops_added, .data$drops_perplay)
+    select(.data$nflId, .data$displayName, .data$position, .data$plays, .data$drops_added_arrival, .data$drops_perplay_arrival)
 
   arrange_by <- function(data, show_top = show_top) {
     if (show_top) {
@@ -153,7 +174,7 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
     }
   }
 
-  tab <- results %>%
+  arrival_tab <- arrival_results %>%
     filter(.data$plays > playcutoff) %>%
     left_join(defender_teams, by = "nflId") %>%
     left_join(
@@ -166,9 +187,9 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
       .data$position %in% c("CB", "S", "FS", "SS")
     ) %>%
     ungroup() %>%
-    arrange(desc(.data$drops_added)) %>%
+    arrange(desc(.data$drops_added_arrival)) %>%
     mutate(rank = row_number()) %>%
-    select(.data$rank, .data$position, .data$displayName, .data$team_logo_espn, .data$plays, .data$drops_added, .data$drops_perplay) %>%
+    select(.data$rank, .data$position, .data$displayName, .data$team_logo_espn, .data$plays, .data$drops_added_arrival, .data$drops_perplay_arrival) %>%
     arrange_by(show_top) %>%
     head(num) %>%
     gt() %>%
@@ -182,11 +203,11 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
       }
     ) %>%
     fmt_number(
-      columns = vars("drops_added", "drops_perplay"),
+      columns = vars("drops_added_arrival", "drops_perplay_arrival"),
       decimals = 2
     ) %>%
     data_color(
-      columns = vars("drops_added"),
+      columns = vars("drops_added_arrival"),
       colors = col_numeric(
         palette = c("red", "white", "blue"),
         domain = c(-29, 29)
@@ -197,17 +218,98 @@ make_catch_prob_table <- function(data, xgb_model, logit_model, num = 1000, play
       displayName = "Name",
       team_logo_espn = "logo",
       plays = "Chances",
-      drops_added = "Drops Added",
-      drops_perplay = "Drops Added (per play)"
+      drops_added_arrival = "Drops Added (Arrival)",
+      drops_perplay_arrival = "Drops Added (per play)"
     ) %>%
     gt_theme_538()
 
-  gtsave(tab, "catch_prob_rankings.png", path = "inst/tables")
-  save(results, file = 'inst/data/drops_added.Rdata')
+  throw_results <- throw_data %>%
+    left_join(arrival_data %>% select(.data$gameId, .data$playId, .data$arrival_preds), by = c('gameId', 'playId')) %>%
+    mutate(
+      marginal = .data$throw_preds - .data$arrival_preds
+    ) %>%
+    select(.data$gameId, .data$playId, .data$marginal, .data$nflId_def_1:.data$nflId_def_11) %>%
+    pivot_longer(
+      cols = -c(.data$gameId, .data$playId, .data$marginal),
+      names_to = "defender",
+      values_to = "nflId"
+    ) %>%
+    select(-.data$nflId) %>%
+    mutate(defender = str_sub(.data$defender, 11L, -1L)) %>%
+    left_join(all_throw_credit, by = c("gameId", "playId", "defender")) %>%
+    distinct() %>%
+    drop_na(.data$nflId) %>%
+    mutate(drops_added_throw = .data$credit * .data$marginal) %>%
+    group_by(.data$nflId) %>%
+    summarize(
+      drops_added_throw = sum(.data$drops_added_throw),
+      plays = n(), .groups = "drop"
+    ) %>%
+    mutate(
+      drops_perplay_throw = .data$drops_added_throw / .data$plays) %>%
+    left_join(nonweek$players, by = c("nflId" = "nflId")) %>%
+    select(.data$nflId, .data$displayName, .data$position, .data$plays, .data$drops_added_throw, .data$drops_perplay_throw)
+
+  throw_tab <- throw_results %>%
+    filter(.data$plays > playcutoff) %>%
+    drop_na(.data$drops_added_throw) %>%
+    left_join(defender_teams, by = "nflId") %>%
+    left_join(
+      teams_colors_logos %>% select(.data$team_abbr, .data$team_logo_espn),
+      by = c("team" = "team_abbr")
+    ) %>%
+    group_by(.data$nflId) %>%
+    filter(
+      row_number() == 1L,
+      .data$position %in% c("CB", "S", "FS", "SS")
+    ) %>%
+    ungroup() %>%
+    arrange(desc(.data$drops_added_throw)) %>%
+    mutate(rank = row_number()) %>%
+    select(.data$rank, .data$position, .data$displayName, .data$team_logo_espn, .data$plays, .data$drops_added_throw, .data$drops_perplay_throw) %>%
+    arrange_by(show_top) %>%
+    head(num) %>%
+    gt() %>%
+    text_transform(
+      locations = cells_body(vars("team_logo_espn")),
+      fn = function(x) {
+        web_image(
+          url = x,
+          height = 40
+        )
+      }
+    ) %>%
+    fmt_number(
+      columns = vars("drops_added_throw", "drops_perplay_throw"),
+      decimals = 2
+    ) %>%
+    data_color(
+      columns = vars("drops_added_throw"),
+      colors = col_numeric(
+        palette = c("red", "white", "blue"),
+        domain = c(-29, 29)
+      )
+    ) %>%
+    cols_label(
+      position = "POS",
+      displayName = "Name",
+      team_logo_espn = "logo",
+      plays = "Chances",
+      drops_added_throw = "Drops Added (throw)",
+      drops_perplay_throw = "Drops Added (per play)"
+    ) %>%
+    gt_theme_538()
+
+  gtsave(arrival_tab, "catch_prob_rankings_arrival.png", path = "inst/tables")
+  gtsave(throw_tab, "catch_prob_rankings_throw.png", path = "inst/tables")
+  save(arrival_results, file = 'inst/data/drops_added_arrival.Rdata')
+  save(throw_results, file = 'inst/data/drops_added_throw.Rdata')
 
   return(list(
-    results = results,
-    table = tab
+    arrival_results = arrival_results,
+    throw_results = throw_results,
+    arrival_table = arrival_tab,
+    throw_table = throw_tab
   ))
 }
 

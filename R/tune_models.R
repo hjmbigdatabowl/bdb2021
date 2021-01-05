@@ -1,6 +1,9 @@
 #' tune_catch_prob_xgb tune the xgboost catch prob model
 #'
 #' @param data a full data frame to tune the model on
+#' @param mod 'a' for arrival, 't' for throw
+#' @param overnightmode TRUE auto sets 4 cores
+#' @param overnightcores an integer for the number of cores to run on
 #' @return a list with the data, the data_split, the workflow, the best set of tuning parameters, and the tuning results
 #' @importFrom magrittr %>%
 #' @importFrom tune finalize_workflow last_fit
@@ -14,14 +17,20 @@
 #' @importFrom yardstick roc_auc  f_meas kap accuracy bal_accuracy metric_set
 #' @importFrom doParallel registerDoParallel
 #' @importFrom utils askYesNo
+#' @importFrom glue glue
 #' @import dials
 #' @export
 #'
-tune_catch_prob_xgb <- function(data) {
+tune_catch_prob_xgb <- function(data, mod = '', overnightmode = FALSE, overnightcores = NULL) {
   where <- NULL
-  ncores <- showPrompt(
-    title = "Cores", message = "How many cores do you want to use? Use parallel::detectCores() to see how many cores are available.", default = 4
-  )
+
+  if (overnightmode) {
+    ncores <- overnightcores
+  } else {
+    ncores <- showPrompt(
+      title = "Cores", message = "How many cores do you want to use? Use parallel::detectCores() to see how many cores are available.", default = 4
+    )
+  }
 
   ncores <- as.integer(ncores)
 
@@ -34,11 +43,7 @@ tune_catch_prob_xgb <- function(data) {
   }
 
   data <- data %>%
-    select(
-      .data$dist_to_def_1:.data$veloToIntercept_def_11, .data$max_throw_velo, .data$throwdist,
-      .data$numberOfPassRushers, .data$targetXThrow, .data$targetYThrow, .data$footballXArr, .data$footballYArr,
-      .data$conditions, .data$temperature, .data$targetSThrow, .data$targetAThrow, .data$skill, .data$height, .data$outcome
-    ) %>%
+    select(-c(.data$gameId, .data$playId)) %>%
     mutate(across(where(is.character), as.factor))
 
   data_split <- initial_split(data, strata = .data$outcome)
@@ -90,18 +95,18 @@ tune_catch_prob_xgb <- function(data) {
       accuracy,
       kap
     ),
-    initial = 20,
+    initial = 25,
     control = control_bayes(
       no_improve = 200,
       uncertain = 50,
       save_pred = F,
-      time_limit = 600,
+      time_limit = 60,
       verbose = T
     )
   )
 
   best_auc <- select_best(xgb_res, "f_meas")
-  save(xgb_spec, xgb_res, xgb_wf, best_auc, data_split, file = "inst/models/catch_prob_xgb_xval.Rdata")
+  save(xgb_spec, xgb_res, xgb_wf, best_auc, data_split, data, file = glue("inst/models/catch_prob_{mod}_xgb_xval.Rdata"))
   return(list(
     data = data,
     data_split = data_split,
