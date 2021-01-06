@@ -4,7 +4,7 @@
 \alias{fit_catch_prob_xgb}
 \title{fit_catch_prob_xgb fit the xgboost catch prob model}
 \usage{
-fit_catch_prob_xgb(workflow, pars, data_split, data)
+fit_catch_prob_xgb(workflow, pars, data_split, data, mod)
 }
 \arguments{
 \item{workflow}{a workflow object}
@@ -14,6 +14,8 @@ fit_catch_prob_xgb(workflow, pars, data_split, data)
 \item{data_split}{a data_split object}
 
 \item{data}{a full data frame to fit the model on}
+
+\item{mod}{the name of the model ('a' for arrival, 't' for throw)}
 }
 \value{
 a list with the final xgboost model and the modeling results (auc, acc, etc.)

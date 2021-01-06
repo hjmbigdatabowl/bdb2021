@@ -1,4 +1,16 @@
 ^bdb2021\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
-^inst/*
+^inst/data/*
+^inst/models/*
+^.github/*
+^codecov\.yml$
+^\.github$
+^README\.Rmd$
+^vignettes/articles$
+^doc$
+^Meta$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^inst/workspaces/*

@@ -4,7 +4,7 @@
 \alias{catch_prob_diagnostic_plots}
 \title{catch_prob_diagnostic_plots make catch prob model diagnostic plots}
 \usage{
-catch_prob_diagnostic_plots(train, test, xgb_model, logit_model)
+catch_prob_diagnostic_plots(train, test, xgb_model, mod = "")
 }
 \arguments{
 \item{train}{the training set}
@@ -13,7 +13,7 @@ catch_prob_diagnostic_plots(train, test, xgb_model, logit_model)
 
 \item{xgb_model}{the xgboost model}
 
-\item{logit_model}{the logit model used for Platt scaling}
+\item{mod}{'a' for arrival, 't' for throw}
 }
 \value{
 A success string

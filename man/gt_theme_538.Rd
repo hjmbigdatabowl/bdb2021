@@ -2,7 +2,8 @@
 % Please edit documentation in R/make_results_tables.R
 \name{gt_theme_538}
 \alias{gt_theme_538}
-\title{gt_theme_538 the Fivethirtyeight GT theme}
+\title{gt_theme_538 the Fivethirtyeight GT theme
+Credit to Thomas Mock: https://themockup.blog/posts/2020-09-26-functions-and-themes-for-gt-tables/#fivethirtyeight}
 \usage{
 gt_theme_538(data, ...)
 }
@@ -10,12 +11,11 @@ gt_theme_538(data, ...)
 \item{data}{the data to use to build the table}
 
 \item{...}{other parameters}
-
-\item{xgb_model}{the xgboost model}
 }
 \value{
 list: the table in data frame form and gt form
 }
 \description{
 gt_theme_538 the Fivethirtyeight GT theme
+Credit to Thomas Mock: https://themockup.blog/posts/2020-09-26-functions-and-themes-for-gt-tables/#fivethirtyeight
 }

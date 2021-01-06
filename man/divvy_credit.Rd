@@ -4,14 +4,12 @@
 \alias{divvy_credit}
 \title{divvy_credit divvy credit between defenders}
 \usage{
-divvy_credit(data, xgb_model, logit_model)
+divvy_credit(data, xgb_model)
 }
 \arguments{
 \item{data}{the data frame from which the probabilities are being predicted}
 
 \item{xgb_model}{the xgboost model}
-
-\item{logit_model}{the logit model used for Platt scaling}
 }
 \value{
 a data frame of the weights to assign credit based on

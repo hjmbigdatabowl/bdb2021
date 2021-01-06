@@ -4,7 +4,7 @@
 \alias{recalc_prob}
 \title{recalc_prob recalculate the catch probabilities after removing a defender}
 \usage{
-recalc_prob(defender_to_remove, data, xgb_model, logit_model)
+recalc_prob(defender_to_remove, data, xgb_model)
 }
 \arguments{
 \item{defender_to_remove}{Numeric: the defender to remove (i.e. 1, 2, 3, .. 11)}
@@ -12,8 +12,6 @@ recalc_prob(defender_to_remove, data, xgb_model, logit_model)
 \item{data}{the data frame from which the probabilities are being predicted}
 
 \item{xgb_model}{the xgboost model}
-
-\item{logit_model}{the logit model used for Platt scaling}
 }
 \value{
 a numeric vector of predicted probabilities
