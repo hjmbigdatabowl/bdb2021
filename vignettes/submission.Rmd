@@ -33,7 +33,7 @@ Our catch probability model has two distinct components: The catch probability a
 
 For the throw time model (which we will refer to as the "throw" model) and the arrival time model (the "arrival" model), the most important predictors were what we expected entering this project: the distance of the receiver to the closest defender, the position of the receiver in the $y$ direction (i.e. distance from the sideline), the distance of the throw, the position of the football in the $y$ direction at arrival time (this is mostly catching throws to the sideline and throw aways), the velocity of the throw, the velocity and acceleration of the targeted receiver, and a composite receiver skill metric. See the appendix for a full table of features. 
 
-These two models both perform quite well, and far better than random chance. The throw model accurately predicts 74% of all passes, with strong precision (84%) and recall (76%), while our AUC of 81% indicates strong calibration. As can be expected, our arrival model outperforms the throw model in all measures - accurately predicting 78% of all passes with a precision of 88%, a recall of 79%, and an AUC of 87%. Below are plots of the calibration of the predictions of each of the models on a held out data set.
+These two models both perform quite well, and far better than random chance. The throw model accurately predicts $74\%$ of all passes, with strong precision ($84\%$) and recall ($76\%$), and an AUC of $.81$. As can be expected, our arrival model outperforms the throw model in all measures - accurately predicting 78% of all passes with a precision of 88%, a recall of 79%, and an AUC of 87%. Below are plots of the calibration of the predictions of each of the models on a held out data set.
 
 &nbsp;
 
