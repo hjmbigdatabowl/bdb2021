@@ -118,9 +118,9 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, mod = '') {
       vip(40)
   )
 
-  ggsave(glue("roc_plot_{mod}.png"), roc_plot, device = "png", path = "inst/plots/")
-  ggsave(glue("calplot_{mod}.png"), calplot, device = "png", path = "inst/plots/")
-  ggsave(glue("varimp_{mod}.png"), varimp, device = "png", path = "inst/plots/")
+  ggsave(glue("roc_plot_{mod}.png"), roc_plot, device = "png", path = "inst/plots/", height = 12, width = 10)
+  ggsave(glue("calplot_{mod}.png"), calplot, device = "png", path = "inst/plots/", height = 12, width = 10)
+  ggsave(glue("varimp_{mod}.png"), varimp, device = "png", path = "inst/plots/", height = 12, width = 10)
   write.csv(metrics, glue("inst/plots/metrics_{mod}.csv"), row.names = F)
   return("plots updated and saved in plots/ dir")
 }

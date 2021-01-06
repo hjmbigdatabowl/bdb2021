@@ -38,8 +38,7 @@ These two models both perform quite well, and far better than random chance. The
 &nbsp;
 
 
-```{r, echo=FALSE,out.width="40%", out.height="30%",fig.cap="Catch Probability Model Calibration Plots",fig.show='hold',fig.align='center'}
-par(mfrow = c(1,2))
+```{r, echo=FALSE,out.width="45%", out.height="45%",fig.cap="Catch Probability Model Calibration Plots",fig.show='hold',fig.align='center'}
 knitr::include_graphics(c("../inst/plots/calplot_t.png", "../inst/plots/calplot_a.png"))
 ```
 

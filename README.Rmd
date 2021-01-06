@@ -13,22 +13,49 @@ knitr::opts_chunk$set(
 )
 ```
 
-# bdb2021
-
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/hjmbigdatabowl/bdb2021/workflows/R-CMD-check/badge.svg)](https://github.com/hjmbigdatabowl/bdb2021/actions)
 <!-- badges: end -->
 
-This is our NFL Big Data Bowl 2021 submission. 
+## NFL Big Data Bowl 2021
 
-## Installation
+This is our NFL Big Data Bowl 2021 submission.
+
+#### Authors
+
+* Hugh McCreery
+* John Edwards
+* Matt Kaye
+* Owen McGrattan
+
+You can find our notebook submission on [our pkgdown site](https://hjmbigdatabowl.github.io/bdb2021/articles/submission.html). The notebook contains an explanation of our methodology and results. We also made a [Shiny app](https://bdb-2021.herokuapp.com/), which lets you explore our models, results, and player ratings.
+
+## Setup
+
+First, install the package from Github either by cloning the repo or with `devtools` (below)
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("hjmbigdatabowl/bdb2021")
+devtools::install_github("hjmbigdatabowl/bdb2021", dependencies = TRUE)
 ```
 
+To run the code, you'll need to have joined the [Big Data Bowl 2021 Kaggle competition](https://www.kaggle.com/c/nfl-big-data-bowl-2021/).
 
-```{r example}
+Once you've joined, you can get the data from [the competition's data page](https://www.kaggle.com/c/nfl-big-data-bowl-2021/data). In addition, you'll need to get the targets data, which can be found [here](https://www.kaggle.com/tombliss/additional-data-targeted-receiver/data). Once you've downloaded the data, you need to save it in `bdb2021/inst/data/` and unzip the zip archive (if you downloaded the data as a zip).
+
+Once that's all set up, you should be good to go! You can see the [function reference page](https://hjmbigdatabowl.github.io/bdb2021/reference/index.html) for documentation on the functions, or you can run `?bdb2021::FUNCTION_NAME`. 
+
+```{r load_the_package}
 library(bdb2021)
+
+?get_weather
 ```
+
+## Code
+
+All of our code for our submission can be found in our Github repo, [hjmbigdatabowl/bdb2021](https://github.com/hjmbigdatabowl/bdb2021).
+
+
+The code for the Shiny app can be found in another repo in Github, [hjmbigdatabowl/bdb2021-shiny](https://github.com/hjmbigdatabowl/bdb2021-shiny).
+
+
