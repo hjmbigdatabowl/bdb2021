@@ -1,8 +1,7 @@
 #' full feature engineering and classification for man v zone coverages
 #' WARNING: this takes a lot of time to run
 #'
-#' @param df DataFrame of position data to be transformed
-#' @return data.frame: man vs zone predictions for non-lineman on a given play
+#' @return a dataframe of man vs zone predictions for non-lineman on a given play
 #' @importFrom magrittr %>%
 #' @importFrom readr read_csv
 #' @importFrom mclust Mclust
