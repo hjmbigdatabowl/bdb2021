@@ -4,10 +4,21 @@
 \alias{run_catch_prob_tuning_pipeline}
 \title{run_catch_prob_tuning_pipeline runs the catch prob tuning pipeline}
 \usage{
-run_catch_prob_tuning_pipeline()
+run_catch_prob_tuning_pipeline(
+  throw_or_arr = "",
+  overnightmode = TRUE,
+  overnightcores = 4
+)
+}
+\arguments{
+\item{throw_or_arr}{the model (throwtime "t" or arrival time "a" to tune)}
+
+\item{overnightmode}{TRUE auto sets 4 cores}
+
+\item{overnightcores}{an integer for the number of cores to run on}
 }
 \value{
-data.frame: normalized positional data
+null
 }
 \description{
 run_catch_prob_tuning_pipeline runs the catch prob tuning pipeline
