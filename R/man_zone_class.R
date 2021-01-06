@@ -1,4 +1,5 @@
 #' full feature engineering and classification for man v zone coverages
+#' WARNING: this takes a lot of time to run
 #'
 #' @param df DataFrame of position data to be transformed
 #' @return data.frame: man vs zone predictions for non-lineman on a given play
@@ -10,19 +11,18 @@
 #' @import dplyr
 #' @export
 #'
+generate_man_zone_class <- function() {
+
 weeks <- data.frame()
 # for each week, do the general cleanup and bind
-for(i in 1:17) {
-  week <- read_csv(paste0('data/week', i, '.csv' ))
-  week$event[week$event == 'None'] <- NA
-  week <- week %>%
-    group_by(playId, gameId, nflId) %>%
-    slice(-n())
-  week <- week %>% fill(event, .direction = 'down')
-  week$event[is.na(week$event)] <- 'pre_snap'
-  week <- week %>% filter(event == 'ball_snap')
-  weeks <- rbind.data.frame(weeks, week)
-}
+
+# load in pbp data
+weeks <- aggregate_week_files() %>% mutate(event = replace(event, event == 'None', NA)) %>%
+  group_by(playId, gameId, nflId) %>%
+  slice(-n()) %>%
+  fill(event, .direction = 'down') %>%
+  filter(event == 'ball_snap')
+
 weeks <- ungroup(weeks)
 
 non_week <- read_non_week_files()
@@ -105,7 +105,7 @@ grouped_weeks <- weeks %>% group_by(nflId, gameId, playId, event ) %>%
             pct_towards_los = mean(turned_to_line, na.rm = T)
   ) %>% mutate((across(where(is.numeric), function(x) ifelse(is.na(x), 0, x))))
 
-# left merge weeks <------ grouped
+# left merge weeks <------ grouped_weeks
 weeks <- left_join(weeks, grouped_weeks, by = c('gameId', 'event', 'playId', 'nflId'))
 
 
@@ -151,7 +151,8 @@ defense$man_prob <- probs$`1`
 defense$zone_prob <- probs$`2`
 
 
-# narrow and save predictions
+# narrow and return predictions frame
 preds <- defense %>% select(gameId, playId, nflId, man_prob, zone_prob)
-# save to csv
-write.csv('data/man_zone_preds.csv', x = preds)
+
+return(preds)
+}
