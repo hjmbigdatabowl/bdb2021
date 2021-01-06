@@ -2,10 +2,14 @@ Package: bdb2021
 Title: Our Big Data Bowl 2021 Submission
 Version: 1.0.0
 Authors@R: 
-    person(given = "Matt",
-           family = "Kaye",
-           role = c("aut", "cre"),
-           email = "mrkaye97@gmail.com")
+    c(person(given = "Matt",
+		     family = "Kaye",
+		     role = c("aut", "cre"),
+		     email = "mrkaye97@gmail.com"),
+	  person(given = "Hugh",
+	  		 family = "McCreery",
+	  		 role = c("aut"),
+	  		 email = "hugh.mccreery@gmail.com"))
 Description: This package houses all of the code behind our 2021 Big Data Bowl submission. It relies on the data from the Kaggle competition, which can be found on the Kaggle site.
 License: MIT + file LICENSE
 Encoding: UTF-8
@@ -35,4 +39,19 @@ Imports:
     ggplot2 (>= 3.3.2),
     vip (>= 0.3.2),
     probably (>= 0.0.6),
-    gt (>= 0.2.2)
+    gt (>= 0.2.2),
+    rstudioapi (>= 0.13),
+    scales (>= 1.1.1),
+    cyphr,
+    sodium (>= 1.1),
+    RPostgres (>= 1.2.1),
+    rjson (>= 0.2.20),
+    DBI (>= 1.1.0),
+    ggthemes (>= 4.2.0),
+    zoo(>= 1.8-3),
+    mclust(>= 5.4.5)
+Suggests: 
+    covr,
+    rmarkdown,
+    knitr
+VignetteBuilder: knitr
