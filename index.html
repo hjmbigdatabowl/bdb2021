@@ -71,22 +71,46 @@
 
       </header><div class="row">
   <div class="contents col-md-9">
-<div id="bdb2021" class="section level1">
-<div class="page-header"><h1 class="hasAnchor">
-<a href="#bdb2021" class="anchor"></a>bdb2021</h1></div>
-<!-- badges: start -->
 
-<p>This is our NFL Big Data Bowl 2021 submission.</p>
-<div id="installation" class="section level2">
+
+<div id="nfl-big-data-bowl-2021" class="section level2">
 <h2 class="hasAnchor">
-<a href="#installation" class="anchor"></a>Installation</h2>
+<a href="#nfl-big-data-bowl-2021" class="anchor"></a>NFL Big Data Bowl 2021</h2>
+<p>This is our NFL Big Data Bowl 2021 submission.</p>
+<div id="authors" class="section level4">
+<h4 class="hasAnchor">
+<a href="#authors" class="anchor"></a>Authors</h4>
+<ul>
+<li>Hugh McCreery</li>
+<li>John Edwards</li>
+<li>Matt Kaye</li>
+<li>Owen McGrattan</li>
+</ul>
+<p>You can find our notebook submission on <a href="https://hjmbigdatabowl.github.io/bdb2021/articles/submission.html">our pkgdown site</a>. The notebook contains an explanation of our methodology and results. We also made a <a href="https://bdb-2021.herokuapp.com/">Shiny app</a>, which lets you explore our models, results, and player ratings.</p>
+</div>
+</div>
+<div id="setup" class="section level2">
+<h2 class="hasAnchor">
+<a href="#setup" class="anchor"></a>Setup</h2>
+<p>First, install the package from Github either by cloning the repo or with <code>devtools</code> (below)</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># install.packages("devtools")</span>
-<span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"hjmbigdatabowl/bdb2021"</span><span class="op">)</span></code></pre></div>
+<span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"hjmbigdatabowl/bdb2021"</span>, dependencies <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<p>To run the code, you’ll need to have joined the <a href="https://www.kaggle.com/c/nfl-big-data-bowl-2021/">Big Data Bowl 2021 Kaggle competition</a>.</p>
+<p>Once you’ve joined, you can get the data from <a href="https://www.kaggle.com/c/nfl-big-data-bowl-2021/data">the competition’s data page</a>. In addition, you’ll need to get the targets data, which can be found <a href="https://www.kaggle.com/tombliss/additional-data-targeted-receiver/data">here</a>. Once you’ve downloaded the data, you need to save it in <code>bdb2021/inst/data/</code> and unzip the zip archive (if you downloaded the data as a zip).</p>
+<p>Once that’s all set up, you should be good to go! You can see the <a href="https://hjmbigdatabowl.github.io/bdb2021/reference/index.html">function reference page</a> for documentation on the functions, or you can run <code>?bdb2021::FUNCTION_NAME</code>.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">bdb2021</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">bdb2021</span><span class="op">)</span>
+
+<span class="op">?</span><span class="va">get_weather</span></code></pre></div>
 </div>
+<div id="code" class="section level2">
+<h2 class="hasAnchor">
+<a href="#code" class="anchor"></a>Code</h2>
+<p>All of our code for our submission can be found in our Github repo, <a href="https://github.com/hjmbigdatabowl/bdb2021">hjmbigdatabowl/bdb2021</a>.</p>
+<p>The code for the Shiny app can be found in another repo in Github, <a href="https://github.com/hjmbigdatabowl/bdb2021-shiny">hjmbigdatabowl/bdb2021-shiny</a>.</p>
 </div>
+
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
