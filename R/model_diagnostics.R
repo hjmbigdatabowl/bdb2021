@@ -136,7 +136,7 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, mod = '') {
 #' @importFrom probably threshold_perf
 #' @export
 #'
-target_prob_diagnositc_plots <- function(train, test, xgb_model, logit_model){
+target_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model){
   . <- NULL
   preds <- train %>%
     mutate(targetPred = predict(xgb_model, ., type='prob')$.pred_0,

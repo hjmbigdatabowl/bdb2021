@@ -86,7 +86,7 @@ run_target_prob_tuning_pipeline <- function(tune_file_name){
                                             data_split = target_prob_tuning_results$data_split,
                                             data = target_prob_tuning_results$data)
   logit_scaling_model <- fit_logit_target_platt_scaler(target_prob_models$final_xgb, train_df)
-  target_prob_diagnositc_plots(train_df, test_df, target_prob_models$final_xgb, logit_scaling_model)
+  target_prob_diagnostic_plots(train_df, test_df, target_prob_models$final_xgb, logit_scaling_model)
 
   prior_target_model <- fit_prior_target_prob(target_df)
   build_target_results(target_prob_models$final_xgb, logit_scaling_model, prior_target_model, target_df)
