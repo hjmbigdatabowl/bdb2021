@@ -65,3 +65,9 @@ We can estimate how a defensive back is impacting the decisions made by the QB t
 There are obviously a number of things that we didn't consider or that would be interesting extensions of this project. Two obvious ones are interceptions added and fumbles added, as those are hugely impactful football plays. We also only considered raw changes (i.e. targets prevented and drops added), but using EPA added instead would certainly be a better metric. It would also be interesting to test how similar our metrics are between seasons to confirm that what we're measuring is a stable skill of the defender.
 
 ## Appendix
+
+All of our code is hosted in two Github repos: [hjmbigdatabowl/bdb2021](https://github.com/hjmbigdatabowl/bdb2021), which hosts our modeling code, and [hjmbigdatabowl/bdb2021-shiny](https://github.com/hjmbigdatabowl/bdb2021-shiny), which hosts the Shiny app. 
+
+There is extensive documentation for our code on our [pkgdown site](hjmbigdatabowl.github.io/bdb2021/reference).
+
+The Shiny app can be found [here](https://bdb-2021.herokuapp.com/), which lets you explore our models, results, and player ratings.
