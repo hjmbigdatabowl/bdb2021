@@ -132,7 +132,7 @@ fit_logit_platt_scaler <- function(model, data) {
 fit_logit_target_platt_scaler <- function(model, data) {
   . <- NULL
   preds <- data %>%
-    mutate(predprob = predict(model, ., type = 'prob')$.pred_0,
+    mutate(predprob = predict(model, ., type = 'prob')$.pred_1,
            target = as.factor(.data$targetFlag))
 
   logit_model <- logistic_reg() %>%
@@ -217,13 +217,7 @@ stepwise_target_prob_predict_xgb <- function(data, xgb_model, logit_model) {
 #' @export
 #'
 fit_prior_target_prob <- function(data){
-  data <- data %>%
-    filter(.data$regressedTargets > 0) %>%
-    group_by(.data$gameId, .data$playId) %>%
-    mutate(playTargets = sum(.data$regressedTargets)) %>%
-    ungroup() %>%
-    mutate(expectedTargetShare = .data$regressedTargets / .data$playTargets,
-           targetFlag = as.factor(.data$targetFlag))
+  data <- data
 
   prior_target_model <- logistic_reg() %>%
     set_engine('glm') %>%

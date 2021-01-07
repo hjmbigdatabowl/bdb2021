@@ -251,6 +251,13 @@ do_target_prob_feature_eng <- function(weeks_to_use = 1:17) {
 
   throw_target_data <- add_receiver_target_rates(throw_target_data)
 
+  throw_target_data <- throw_target_data %>%
+    group_by(.data$gameId, .data$playId) %>%
+    mutate(playTargets = sum(.data$regressedTargets)) %>%
+    ungroup() %>%
+    mutate(expectedTargetShare = .data$regressedTargets / .data$playTargets,
+           targetFlag = as.factor(.data$targetFlag))
+
   rm(nonweek, play_metadata, game_metadata, plays, pbp, play_targeted_receiver, receiver_throw_position, football_start_pos, defenders, qb_throw_position)
 
   return(throw_target_data)

@@ -129,18 +129,23 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, mod = '') {
 #' @param train dataframe of training set
 #' @param test dataframe of testing set
 #' @param xgb_model xgboost model produced by tune_target_prob_xgb
-#' @param logit_model model used for Pratt scaling
+#' @param pre_snap_model logit model for the catch probability pre-snap
 #' @return success string
 #' @importFrom magrittr %>%
 #' @importFrom vip vip
 #' @importFrom probably threshold_perf
+#' @importFrom grDevices dev.off jpeg
+#' @importFrom workflows pull_workflow_fit
+#' @importFrom utils write.csv
+#' @importFrom ggthemes theme_fivethirtyeight
 #' @export
 #'
-target_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model){
+target_prob_diagnostic_plots <- function(train, test, xgb_model, pre_snap_model, scale_model){
   . <- NULL
-  preds <- train %>%
-    mutate(targetPred = predict(xgb_model, ., type='prob')$.pred_0,
-           calibratedProb = stepwise_target_prob_predict_xgb(., xgb_model, logit_model))
+  preds <- train_df %>%
+    mutate(targetPred = predict(xgb_model, ., type='prob')$.pred_1,
+           calibratedPred = stepwise_target_prob_predict_xgb(., xgb_model, scale_model),
+           preSnapProb = predict(prior_target_model, ., type='prob')$.pred_1)
 
   THRESHOLD_TO_USE <- preds %>%
     mutate(targetFlag = as.factor(.data$targetFlag)) %>%
@@ -159,8 +164,9 @@ target_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model){
 
   results <- test %>%
     mutate(targetFlag = as.factor(.data$targetFlag),
-           targetPred = predict(xgb_model, ., type='prob')$.pred_0,
-           calibratedProb = stepwise_target_prob_predict_xgb(., xgb_model, logit_model))
+           targetPred = predict(xgb_model, ., type='prob')$.pred_1,
+           calibratedPred = stepwise_target_prob_predict_xgb(., xgb_model, scale_model),
+           preSnapProb = predict(prior_target_model, ., type='prob')$.pred_1)
 
   (
     roc_plot <- results %>%
@@ -179,22 +185,48 @@ target_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model){
     calplot_uncalibrated <- results %>%
       mutate(targetPred = round(.data$targetPred * 33, digits = 0) / 33) %>%
       group_by(.data$targetPred) %>%
-      summarize(targets = sum(ifelse(.data$targetFlag == 0, 1, 0)) / n(),
+      summarize(targets = sum(ifelse(.data$targetFlag == 1, 1, 0)) / n(),
                 N = n(), .groups = 'drop') %>%
       ggplot(aes(.data$targetPred, .data$targets, size = .data$N)) +
       geom_point() +
-      geom_abline(slope = 1, intercept = 0)
+      geom_abline(slope = 1, intercept = 0) +
+      theme_fivethirtyeight() +
+      theme(axis.title = element_text()) +
+      labs(x = 'Predicted Target Probability',
+           y = 'Actual Target Proportion',
+           title = 'Pre-Throw Model Calibration')
   )
 
   (
     calplot_calibrated <- results %>%
-      mutate(targetPred = round(.data$calibratedProb * 33, digits = 0) / 33) %>%
+      mutate(targetPred = round(.data$calibratedPred * 33, digits = 0) / 33) %>%
       group_by(.data$targetPred) %>%
-      summarize(targets = sum(ifelse(.data$targetFlag == 0, 1, 0)) / n(),
+      summarize(targets = sum(ifelse(.data$targetFlag == 1, 1, 0)) / n(),
                 N = n(), .groups = 'drop') %>%
       ggplot(aes(.data$targetPred, .data$targets, size = .data$N)) +
       geom_point() +
-      geom_abline(slope = 1, intercept = 0)
+      geom_abline(slope = 1, intercept = 0) +
+      theme_fivethirtyeight() +
+      theme(axis.title = element_text()) +
+      labs(x = 'Predicted Target Probability',
+           y = 'Actual Target Proportion',
+           title = 'Pre-Throw Model Calibration')
+  )
+
+  (
+    presnap_calplot <- results  %>%
+      mutate(targetPred = round(.data$preSnapProb * 33, digits = 0) / 33) %>%
+      group_by(.data$targetPred) %>%
+      summarize(targets = sum(ifelse(.data$targetFlag == 1, 1, 0)) / n(),
+                N = n(), .groups = 'drop') %>%
+      ggplot(aes(.data$targetPred, .data$targets, size = .data$N)) +
+      geom_point() +
+      geom_abline(slope = 1, intercept = 0) +
+      theme_fivethirtyeight() +
+      theme(axis.title = element_text()) +
+      labs(x = 'Predicted Target Probability',
+           y = 'Actual Target Proportion',
+           title = 'Pre-Snap Model Calibration')
   )
 
   (
@@ -205,6 +237,7 @@ target_prob_diagnostic_plots <- function(train, test, xgb_model, logit_model){
   ggsave('target_roc_plot.png', roc_plot, device = 'png', path = 'inst/plots/')
   ggsave('target_calplot_calibrated.png', calplot_calibrated, device = 'png', path = 'inst/plots/')
   ggsave('target_calplot_uncalibrated.png', calplot_uncalibrated, device = 'png', path = 'inst/plots/')
+  ggsave('target_calplot_pre_snap.png', presnap_calplot, device = 'png', path = 'inst/plots/')
   ggsave('target_varimp.png', varimp, device = 'png', path = 'inst/plots/')
   return('plots updated and saved in plots/ dir')
 }

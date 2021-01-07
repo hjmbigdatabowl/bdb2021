@@ -30,10 +30,10 @@ build_target_results <- function(final_model, scale_model, prior_target_model, d
               averageOpennessRank = mean(.data$playOpenRank),
               wrStrength = mean(.data$regressedTargets),
               priorExpectedTargets = sum(.data$targetPredPrior),
-              preThrowExpectedTargets = sum(.data$targetPred),
+              preThrowExpectedTargets = sum(.data$calibratedProb),
               actualTargets = sum(.data$targetFlag == 1),
-              coverageTargetsAdded = sum(.data$targetPredPrior) - sum(.data$targetPred),
-              deterrenceTargetsAdded = sum(.data$targetPred) - sum(.data$targetFlag == 1),
+              coverageTargetsAdded = sum(.data$targetPredPrior) - sum(.data$calibratedProb),
+              deterrenceTargetsAdded = sum(.data$calibratedProb) - sum(.data$targetFlag == 1),
               regressedCoverage = .data$coverageTargetsAdded / sqrt(.data$plays),
               regressedDeterrence = .data$deterrenceTargetsAdded / sqrt(.data$plays),
               combinedGrade = .data$regressedCoverage + .data$regressedDeterrence,
@@ -48,7 +48,7 @@ build_target_results <- function(final_model, scale_model, prior_target_model, d
            position = .data$defPosition1)
 
   engine <- connect_to_heroku_postgres()
-  dbWriteTable(engine, 'target_data', with_pred)
-  dbWriteTable(engine, 'target_data_aggregated', aggregated_target_data)
+  dbWriteTable(engine, 'target_data', with_pred, overwrite=T)
+  dbWriteTable(engine, 'target_data_aggregated', aggregated_target_data, overwrite=T)
 
 }
