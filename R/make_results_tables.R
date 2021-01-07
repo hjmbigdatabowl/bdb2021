@@ -166,7 +166,7 @@ make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE)
     mutate(drops_added_arrival = .data$credit * .data$marginal) %>%
     group_by(.data$nflId) %>%
     summarize(
-      drops_added_arrival = sum(.data$drops_added_arrival),
+      drops_added_arrival = sum(.data$drops_added_arrival, na.rm = T),
       plays = n(), .groups = "drop"
     ) %>%
     mutate(
@@ -242,7 +242,7 @@ make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE)
     mutate(drops_added_throw = .data$credit * .data$marginal) %>%
     group_by(.data$nflId) %>%
     summarize(
-      drops_added_throw = sum(.data$drops_added_throw),
+      drops_added_throw = sum(.data$drops_added_throw, na.rm = T),
       plays = n(), .groups = "drop"
     ) %>%
     mutate(
