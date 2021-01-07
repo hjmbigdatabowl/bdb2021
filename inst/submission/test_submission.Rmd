@@ -1,6 +1,6 @@
 ---
 title: "BDB 2021 Submission"
-output: html_notebook
+output: html_document
 ---
 
 ```{r, include = FALSE}
