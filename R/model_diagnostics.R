@@ -138,11 +138,12 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, mod = '') {
 #' @importFrom workflows pull_workflow_fit
 #' @importFrom utils write.csv
 #' @importFrom ggthemes theme_fivethirtyeight
+#' @importFrom yardstick metrics
 #' @export
 #'
 target_prob_diagnostic_plots <- function(train, test, xgb_model, pre_snap_model, scale_model){
   . <- NULL
-  preds <- train_df %>%
+  preds <- train %>%
     mutate(targetPred = predict(xgb_model, ., type='prob')$.pred_1,
            calibratedPred = stepwise_target_prob_predict_xgb(., xgb_model, scale_model),
            preSnapProb = predict(prior_target_model, ., type='prob')$.pred_1)
@@ -151,7 +152,7 @@ target_prob_diagnostic_plots <- function(train, test, xgb_model, pre_snap_model,
     mutate(targetFlag = as.factor(.data$targetFlag)) %>%
     threshold_perf(.data$targetFlag, .data$targetPred, thresholds = seq(0, 1, by = .01)) %>%
     pivot_wider(id_cols = .data$.threshold, names_from = .data$.metric, values_from = .data$.estimate) %>%
-    filter(.data$distance == min(.data$distance)) %>%
+    filter(.data$distance == max(.data$distance)) %>%
     pull(.data$.threshold)
 
   preds %>%
@@ -166,7 +167,9 @@ target_prob_diagnostic_plots <- function(train, test, xgb_model, pre_snap_model,
     mutate(targetFlag = as.factor(.data$targetFlag),
            targetPred = predict(xgb_model, ., type='prob')$.pred_1,
            calibratedPred = stepwise_target_prob_predict_xgb(., xgb_model, scale_model),
-           preSnapProb = predict(prior_target_model, ., type='prob')$.pred_1)
+           preSnapProb = predict(prior_target_model, ., type='prob')$.pred_1,
+           predOutcomePreSnap = as.factor(ifelse(.data$preSnapProb > THRESHOLD_TO_USE, 1, 0)),
+           predOutcomePreThrow = as.factor(ifelse(.data$calibratedPred > THRESHOLD_TO_USE, 1, 0)))
 
   (
     roc_plot <- results %>%
@@ -230,14 +233,29 @@ target_prob_diagnostic_plots <- function(train, test, xgb_model, pre_snap_model,
   )
 
   (
-    varimp <-   pull_workflow_fit(xgb_model) %>%
+    varimp <- pull_workflow_fit(xgb_model) %>%
       vip(20)
   )
 
-  ggsave('target_roc_plot.png', roc_plot, device = 'png', path = 'inst/plots/')
-  ggsave('target_calplot_calibrated.png', calplot_calibrated, device = 'png', path = 'inst/plots/')
-  ggsave('target_calplot_uncalibrated.png', calplot_uncalibrated, device = 'png', path = 'inst/plots/')
-  ggsave('target_calplot_pre_snap.png', presnap_calplot, device = 'png', path = 'inst/plots/')
-  ggsave('target_varimp.png', varimp, device = 'png', path = 'inst/plots/')
+  pre_snap_metrics <- results %>%
+    mutate(preSnapProb = 1 - preSnapProb) %>%  # w/o this gives the opposite metric for AUC
+    metrics(preSnapProb, truth=targetFlag, estimate=predOutcomePreSnap) %>%
+    rbind(results %>% recall(truth=targetFlag, estimate=predOutcomePreSnap)) %>%
+    rbind(results %>% precision(truth=targetFlag, estimate=predOutcomePreSnap))
+
+  pre_throw_metrics <- results %>%
+    mutate(calibratedPred = 1 - calibratedPred) %>%
+    metrics(calibratedPred, truth=targetFlag, estimate=predOutcomePreThrow) %>%
+    rbind(results %>% recall(truth=targetFlag, estimate=predOutcomePreThrow)) %>%
+    rbind(results %>% precision(truth=targetFlag, estimate=predOutcomePreThrow))
+
+  write.csv(pre_snap_metrics, "inst/plots/metrics_target_snap.csv", row.names = F)
+  write.csv(pre_throw_metrics, "inst/plots/metrics_target_throw.csv", row.names = F)
+
+  ggsave('target_roc_plot.png', roc_plot, device = 'png', path = 'inst/plots/', height = 12, width = 10)
+  ggsave('target_calplot_calibrated.png', calplot_calibrated, device = 'png', path = 'inst/plots/', height = 12, width = 10)
+  ggsave('target_calplot_uncalibrated.png', calplot_uncalibrated, device = 'png', path = 'inst/plots/', height = 12, width = 10)
+  ggsave('target_calplot_pre_snap.png', presnap_calplot, device = 'png', path = 'inst/plots/', height = 12, width = 10)
+  ggsave('target_varimp.png', varimp, device = 'png', path = 'inst/plots/', height = 12, width = 10)
   return('plots updated and saved in plots/ dir')
 }

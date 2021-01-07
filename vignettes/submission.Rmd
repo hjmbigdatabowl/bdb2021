@@ -56,11 +56,13 @@ To determine the probability of a receiver being targeted before the play, we ch
 
 The model for target probability at the time of throw was a tree booster similar to the two catch probability models. This model used the positional data, comparing the receiver position to the QB and the three closest defenders along with a variety of situational factors such as the distance to the first down line, time left, weather conditions, how open that receiver is relative to others on the play to determine how likely that receiver is to be targeted. 
 
+The pre-snap model, which by design only considers the players on the field for the offense, performs relatively well for the lack of information with an AUC of $0.59$ and is well-calibrated on a held-out dataset. The pre-throw model performs much better given the extra information, with an $89\%$ recall, $94\%$ precision, and $0.94$ AUC. Calibration plots of the models on held-out data are below.
+
 &nbsp;
 
 
 ```{r, echo=FALSE,out.width="45%", out.height="45%",fig.cap="Target Probability Model Calibration Plots",fig.show='hold',fig.align='center'}
-knitr::include_graphics(c("../inst/plots/target_calplot_calibrated.png", "../inst/plots/target_calplot_pre_snap.png"))
+knitr::include_graphics(c( "../inst/plots/target_calplot_pre_snap.png", "../inst/plots/target_calplot_calibrated.png"))
 ```
 
 &nbsp;

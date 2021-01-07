@@ -1,0 +1,7 @@
+".metric",".estimator",".estimate"
+"accuracy","binary",0.873775110240078
+"kap","binary",0.661843037406872
+"mn_log_loss","binary",0.265754387601423
+"roc_auc","binary",0.936686591417834
+"recall","binary",0.892908138981437
+"precision","binary",0.940586613186262
