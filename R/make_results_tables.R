@@ -462,7 +462,6 @@ load_player_summary_table <- function(){
 
   summary_stats <- df %>%
     dplyr::group_by(position) %>%
-    dplyr::slice_max(.data$plays_throw, n=120) %>%
     dplyr::summarise(meanCoverage = mean(regressedCoverage),
                      sdCoverage = sd(regressedCoverage),
                      meanDeterrence = mean(regressedDeterrence),
