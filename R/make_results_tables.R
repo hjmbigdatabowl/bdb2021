@@ -419,3 +419,131 @@ make_tendency_table <- function(data, model) {
     ) %>%
     gt_theme_538()
 }
+
+
+#' load_player_summary_table Function that builds the overall results
+#' @importFrom magrittr %>%
+#'
+#'
+load_player_summary_table <- function(){
+  `%>%` <- magrittr::`%>%`
+  engine <- bdb2021::connect_to_heroku_postgres()
+
+  catch_throw_agg <- engine %>%
+    dplyr::tbl('drops_added_throw') %>%
+    dplyr::rename(plays_throw = plays) %>%
+    dplyr::collect()
+
+  catch_arrival_agg <- engine %>%
+    dplyr::tbl('drops_added_arrival') %>%
+    dplyr::rename(plays_arrival = plays) %>%
+    dplyr::collect()
+
+  target_agg <- engine %>%
+    dplyr::tbl('target_data_aggregated') %>%
+    dplyr::collect()
+
+
+  speed_dat <- engine %>%
+    dplyr::tbl('speed_summary') %>%
+    dplyr::collect() %>%
+    dplyr::select(-.data$plays)
+
+  df <- target_agg %>%
+    dplyr::filter(plays > 50) %>%
+    dplyr::left_join(catch_throw_agg %>% dplyr::select(.data$nflId, .data$plays_throw, .data$drops_added_throw),
+                     by = "nflId") %>%
+    dplyr::left_join(catch_arrival_agg %>% dplyr::select(.data$nflId, .data$plays_arrival, .data$drops_added_arrival),
+                     by = "nflId") %>%
+    dplyr::left_join(speed_dat, by="nflId") %>%
+    dplyr::mutate(regressedDropsThrow = .data$drops_added_throw / .data$plays_throw,
+                  regressedDropsArrival = .data$drops_added_arrival / .data$plays_arrival,
+                  dropdownName = paste(.data$position, " ", .data$displayName, " (", .data$defendingTeam, ")", sep=""))
+
+  summary_stats <- df %>%
+    dplyr::group_by(position) %>%
+    dplyr::slice_max(.data$plays_throw, n=120) %>%
+    dplyr::summarise(meanCoverage = mean(regressedCoverage),
+                     sdCoverage = sd(regressedCoverage),
+                     meanDeterrence = mean(regressedDeterrence),
+                     sdDeterrence = sd(regressedDeterrence),
+                     meanDropsThrow = mean(regressedDropsThrow, na.rm = T),
+                     sdDropsThrow = sd(regressedDropsThrow, na.rm = T),
+                     meanDropsArrival = mean(regressedDropsArrival, na.rm = T),
+                     sdDropsArrival = sd(regressedDropsArrival, na.rm = T),
+                     .groups = 'drop')
+
+  df <- df %>%
+    dplyr::inner_join(summary_stats, by="position") %>%
+    dplyr::mutate(
+      coverageZ = (regressedCoverage - meanCoverage) / sdCoverage,
+      coverageGrade = 100 * pnorm(.data$coverageZ),
+      deterrenceZ = (regressedDeterrence - meanDeterrence) / sdDeterrence,
+      deterrenceGrade = 100 * pnorm(.data$deterrenceZ),
+      dropsThrowZ = (regressedDropsThrow - meanDropsThrow) / sdDropsThrow,
+      dropsThrowGrade = 100 * pnorm(.data$dropsThrowZ),
+      dropsArrivalZ = (regressedDropsArrival - meanDropsArrival) / sdDropsArrival,
+      dropsArrivalGrade = 100 * pnorm(.data$dropsArrivalZ),
+      totalGrade = (.data$coverageGrade + .data$deterrenceGrade + .data$dropsThrowGrade + .data$dropsArrivalGrade) / 4,
+      totalGrade = 100 * pnorm((.data$totalGrade - mean(.data$totalGrade, na.rm = T)) / sd(.data$totalGrade, na.rm = T))
+    ) %>%
+    dplyr::select(-(meanCoverage:sdDropsArrival)) %>%
+    dplyr::filter(plays > 200, position == "DB")
+
+  rm(summary_stats)
+  return(df)
+}
+
+
+#' build_final_leaderboard The top-15 leaderboard in the final report
+#' @importFrom dplyr left_join select
+#' @importFrom gt gt
+#' @import webshot
+#'
+build_final_leaderboard <- function() {
+  summary_dat <- load_player_summary_table() %>%
+    left_join(nflfastR::teams_colors_logos %>% select(team_abbr, team_logo_espn),
+              by = c("defendingTeam" = "team_abbr"))
+
+  total_table <- summary_dat %>%
+    arrange(-totalGrade) %>%
+    head(15) %>%
+    select(displayName, team_logo_espn, coverageGrade, deterrenceGrade, dropsThrowGrade, dropsArrivalGrade, totalGrade) %>%
+    gt()  %>%
+    text_transform(
+      locations = cells_body(vars("team_logo_espn")),
+      fn = function(x) {
+        web_image(
+          url = x,
+          height = 40
+        )
+      }
+    ) %>%
+    fmt_number(
+      columns = vars("coverageGrade", "deterrenceGrade", "dropsThrowGrade", "dropsArrivalGrade", "totalGrade"),
+      decimals = 0
+    ) %>%
+    cols_label(
+      displayName = "Name",
+      team_logo_espn = "",
+      coverageGrade = "Coverage",
+      deterrenceGrade = "Deterrence",
+      dropsThrowGrade = "Closing",
+      dropsArrivalGrade = "Breakups",
+      totalGrade = "Total"
+    ) %>% data_color(
+      columns = vars("coverageGrade", "deterrenceGrade", "dropsThrowGrade", "dropsArrivalGrade", "totalGrade"),
+      colors = col_numeric(
+        palette = c("red", "white", "blue"),
+        domain = c(0, 100)
+      )
+    ) %>%
+    tab_footnote(
+      footnote = "538 table format courtesy Tom Mock from themockup.blog",
+      locations=cells_title()
+    ) %>%
+    gt_theme_538()
+
+  # webshot::install_phantomjs() needed to run this if not installed
+  total_table %>% gtsave("inst/plots/final_leaderboard.png")
+}
