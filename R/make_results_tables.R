@@ -423,71 +423,73 @@ make_tendency_table <- function(data, model) {
 
 #' load_player_summary_table Function that builds the overall results
 #' @importFrom magrittr %>%
+#' @importFrom rlang .data
+#' @importFrom stats pnorm
+#' @import dplyr
 #'
 #'
 load_player_summary_table <- function(){
-  `%>%` <- magrittr::`%>%`
-  engine <- bdb2021::connect_to_heroku_postgres()
+  engine <- connect_to_heroku_postgres()
 
   catch_throw_agg <- engine %>%
-    dplyr::tbl('drops_added_throw') %>%
-    dplyr::rename(plays_throw = plays) %>%
-    dplyr::collect()
+    tbl('drops_added_throw') %>%
+    rename(plays_throw = .data$plays) %>%
+    collect()
 
   catch_arrival_agg <- engine %>%
-    dplyr::tbl('drops_added_arrival') %>%
-    dplyr::rename(plays_arrival = plays) %>%
-    dplyr::collect()
+    tbl('drops_added_arrival') %>%
+    rename(plays_arrival = .data$plays) %>%
+    collect()
 
   target_agg <- engine %>%
-    dplyr::tbl('target_data_aggregated') %>%
-    dplyr::collect()
+    tbl('target_data_aggregated') %>%
+    collect()
 
 
   speed_dat <- engine %>%
-    dplyr::tbl('speed_summary') %>%
-    dplyr::collect() %>%
-    dplyr::select(-.data$plays)
+    tbl('speed_summary') %>%
+    collect() %>%
+    select(-.data$plays)
 
   df <- target_agg %>%
-    dplyr::filter(plays > 50) %>%
-    dplyr::left_join(catch_throw_agg %>% dplyr::select(.data$nflId, .data$plays_throw, .data$drops_added_throw),
+    filter(.data$plays > 50) %>%
+    left_join(catch_throw_agg %>% select(.data$nflId, .data$plays_throw, .data$drops_added_throw),
                      by = "nflId") %>%
-    dplyr::left_join(catch_arrival_agg %>% dplyr::select(.data$nflId, .data$plays_arrival, .data$drops_added_arrival),
+    left_join(catch_arrival_agg %>% select(.data$nflId, .data$plays_arrival, .data$drops_added_arrival),
                      by = "nflId") %>%
-    dplyr::left_join(speed_dat, by="nflId") %>%
-    dplyr::mutate(regressedDropsThrow = .data$drops_added_throw / .data$plays_throw,
+    left_join(speed_dat, by="nflId") %>%
+    mutate(regressedDropsThrow = .data$drops_added_throw / .data$plays_throw,
                   regressedDropsArrival = .data$drops_added_arrival / .data$plays_arrival,
                   dropdownName = paste(.data$position, " ", .data$displayName, " (", .data$defendingTeam, ")", sep=""))
 
   summary_stats <- df %>%
-    dplyr::group_by(position) %>%
-    dplyr::summarise(meanCoverage = mean(regressedCoverage),
-                     sdCoverage = sd(regressedCoverage),
-                     meanDeterrence = mean(regressedDeterrence),
-                     sdDeterrence = sd(regressedDeterrence),
-                     meanDropsThrow = mean(regressedDropsThrow, na.rm = T),
-                     sdDropsThrow = sd(regressedDropsThrow, na.rm = T),
-                     meanDropsArrival = mean(regressedDropsArrival, na.rm = T),
-                     sdDropsArrival = sd(regressedDropsArrival, na.rm = T),
+    group_by(.data$position) %>%
+    summarise(meanCoverage = mean(.data$regressedCoverage),
+                     sdCoverage = sd(.data$regressedCoverage),
+                     meanDeterrence = mean(.data$regressedDeterrence),
+                     sdDeterrence = sd(.data$regressedDeterrence),
+                     meanDropsThrow = mean(.data$regressedDropsThrow, na.rm = T),
+                     sdDropsThrow = sd(.data$regressedDropsThrow, na.rm = T),
+                     meanDropsArrival = mean(.data$regressedDropsArrival, na.rm = T),
+                     sdDropsArrival = sd(.data$regressedDropsArrival, na.rm = T),
                      .groups = 'drop')
 
   df <- df %>%
-    dplyr::inner_join(summary_stats, by="position") %>%
-    dplyr::mutate(
-      coverageZ = (regressedCoverage - meanCoverage) / sdCoverage,
+    inner_join(summary_stats, by="position") %>%
+    mutate(
+      coverageZ = (.data$regressedCoverage - .data$meanCoverage) / .data$sdCoverage,
       coverageGrade = 100 * pnorm(.data$coverageZ),
-      deterrenceZ = (regressedDeterrence - meanDeterrence) / sdDeterrence,
+      deterrenceZ = (.data$regressedDeterrence - .data$meanDeterrence) / .data$sdDeterrence,
       deterrenceGrade = 100 * pnorm(.data$deterrenceZ),
-      dropsThrowZ = (regressedDropsThrow - meanDropsThrow) / sdDropsThrow,
+      dropsThrowZ = (.data$regressedDropsThrow - .data$meanDropsThrow) / .data$sdDropsThrow,
       dropsThrowGrade = 100 * pnorm(.data$dropsThrowZ),
-      dropsArrivalZ = (regressedDropsArrival - meanDropsArrival) / sdDropsArrival,
+      dropsArrivalZ = (.data$regressedDropsArrival - .data$meanDropsArrival) / .data$sdDropsArrival,
       dropsArrivalGrade = 100 * pnorm(.data$dropsArrivalZ),
       totalGrade = (.data$coverageGrade + .data$deterrenceGrade + .data$dropsThrowGrade + .data$dropsArrivalGrade) / 4,
       totalGrade = 100 * pnorm((.data$totalGrade - mean(.data$totalGrade, na.rm = T)) / sd(.data$totalGrade, na.rm = T))
     ) %>%
-    dplyr::select(-(meanCoverage:sdDropsArrival)) %>%
-    dplyr::filter(plays > 200, position == "DB")
+    select(-(.data$meanCoverage:.data$sdDropsArrival)) %>%
+    filter(.data$plays > 200, .data$position == "DB")
 
   rm(summary_stats)
   return(df)
@@ -497,17 +499,21 @@ load_player_summary_table <- function(){
 #' build_final_leaderboard The top-15 leaderboard in the final report
 #' @importFrom dplyr left_join select
 #' @importFrom gt gt
+#' @importFrom rlang .data
 #' @import webshot
+#' @import nflfastR
 #'
 build_final_leaderboard <- function() {
+  teams_colors_logos <- NULL
+  data(teams_colors_logos, envir = environment())
   summary_dat <- load_player_summary_table() %>%
-    left_join(nflfastR::teams_colors_logos %>% select(team_abbr, team_logo_espn),
+    left_join(teams_colors_logos %>% select(.data$team_abbr, .data$team_logo_espn),
               by = c("defendingTeam" = "team_abbr"))
 
   total_table <- summary_dat %>%
-    arrange(-totalGrade) %>%
+    arrange(-.data$totalGrade) %>%
     head(15) %>%
-    select(displayName, team_logo_espn, coverageGrade, deterrenceGrade, dropsThrowGrade, dropsArrivalGrade, totalGrade) %>%
+    select(.data$displayName, .data$team_logo_espn, .data$coverageGrade, .data$deterrenceGrade, .data$dropsThrowGrade, .data$dropsArrivalGrade, .data$totalGrade) %>%
     gt()  %>%
     text_transform(
       locations = cells_body(vars("team_logo_espn")),

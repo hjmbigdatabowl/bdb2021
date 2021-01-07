@@ -130,6 +130,7 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, mod = '') {
 #' @param test dataframe of testing set
 #' @param xgb_model xgboost model produced by tune_target_prob_xgb
 #' @param pre_snap_model logit model for the catch probability pre-snap
+#' @param scale_model the platt scaler
 #' @return success string
 #' @importFrom magrittr %>%
 #' @importFrom vip vip
@@ -138,11 +139,12 @@ catch_prob_diagnostic_plots <- function(train, test, xgb_model, mod = '') {
 #' @importFrom workflows pull_workflow_fit
 #' @importFrom utils write.csv
 #' @importFrom ggthemes theme_fivethirtyeight
-#' @importFrom yardstick metrics
+#' @importFrom yardstick metrics precision recall
 #' @export
 #'
 target_prob_diagnostic_plots <- function(train, test, xgb_model, pre_snap_model, scale_model){
   . <- NULL
+  prior_target_model <- NULL
   preds <- train %>%
     mutate(targetPred = predict(xgb_model, ., type='prob')$.pred_1,
            calibratedPred = stepwise_target_prob_predict_xgb(., xgb_model, scale_model),
@@ -238,16 +240,16 @@ target_prob_diagnostic_plots <- function(train, test, xgb_model, pre_snap_model,
   )
 
   pre_snap_metrics <- results %>%
-    mutate(preSnapProb = 1 - preSnapProb) %>%  # w/o this gives the opposite metric for AUC
-    metrics(preSnapProb, truth=targetFlag, estimate=predOutcomePreSnap) %>%
-    rbind(results %>% recall(truth=targetFlag, estimate=predOutcomePreSnap)) %>%
-    rbind(results %>% precision(truth=targetFlag, estimate=predOutcomePreSnap))
+    mutate(preSnapProb = 1 - .data$preSnapProb) %>%  # w/o this gives the opposite metric for AUC
+    metrics(.data$preSnapProb, truth=.data$targetFlag, estimate=.data$predOutcomePreSnap) %>%
+    rbind(results %>% recall(truth=.data$targetFlag, estimate=.data$predOutcomePreSnap)) %>%
+    rbind(results %>% precision(truth=.data$targetFlag, estimate=.data$predOutcomePreSnap))
 
   pre_throw_metrics <- results %>%
-    mutate(calibratedPred = 1 - calibratedPred) %>%
-    metrics(calibratedPred, truth=targetFlag, estimate=predOutcomePreThrow) %>%
-    rbind(results %>% recall(truth=targetFlag, estimate=predOutcomePreThrow)) %>%
-    rbind(results %>% precision(truth=targetFlag, estimate=predOutcomePreThrow))
+    mutate(calibratedPred = 1 - .data$calibratedPred) %>%
+    metrics(.data$calibratedPred, truth=.data$targetFlag, estimate=.data$predOutcomePreThrow) %>%
+    rbind(results %>% recall(truth=.data$targetFlag, estimate=.data$predOutcomePreThrow)) %>%
+    rbind(results %>% precision(truth=.data$targetFlag, estimate=.data$predOutcomePreThrow))
 
   write.csv(pre_snap_metrics, "inst/plots/metrics_target_snap.csv", row.names = F)
   write.csv(pre_throw_metrics, "inst/plots/metrics_target_throw.csv", row.names = F)

@@ -48,9 +48,10 @@ Imports:
     rjson (>= 0.2.20),
     DBI (>= 1.1.0),
     ggthemes (>= 4.2.0),
-    zoo(>= 1.8-3),
-    mclust(>= 5.4.5),
-    webshot
+    zoo (>= 1.8-3),
+    mclust (>= 5.4.5),
+    webshot,
+    tidyselect (>= 1.1.0)
 Suggests: 
     covr,
     rmarkdown,

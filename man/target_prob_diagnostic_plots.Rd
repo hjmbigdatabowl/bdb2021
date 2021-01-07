@@ -4,7 +4,13 @@
 \alias{target_prob_diagnostic_plots}
 \title{target_prob_diagnostic_plots same diagnostic plots for target probs}
 \usage{
-target_prob_diagnostic_plots(train, test, xgb_model, logit_model)
+target_prob_diagnostic_plots(
+  train,
+  test,
+  xgb_model,
+  pre_snap_model,
+  scale_model
+)
 }
 \arguments{
 \item{train}{dataframe of training set}
@@ -13,7 +19,9 @@ target_prob_diagnostic_plots(train, test, xgb_model, logit_model)
 
 \item{xgb_model}{xgboost model produced by tune_target_prob_xgb}
 
-\item{logit_model}{model used for Pratt scaling}
+\item{pre_snap_model}{logit model for the catch probability pre-snap}
+
+\item{scale_model}{the platt scaler}
 }
 \value{
 success string

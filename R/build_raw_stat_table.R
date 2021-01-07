@@ -3,6 +3,7 @@
 #' @importFrom dplyr filter group_by ungroup summarise arrange
 #' @importFrom DBI dbWriteTable
 #' @importFrom magrittr %>%
+#' @importFrom stats median
 #' @export
 #'
 
@@ -20,11 +21,11 @@ build_raw_stat_table <- function() {
     group_by(.data$nflId) %>%
     summarise(plays = n(),
               topSpeed = max(.data$maxSpeed),
-              medianSpeed = stats::median(.data$maxSpeed),
+              medianSpeed = median(.data$maxSpeed),
               topAccel = max(.data$maxAccel),
-              medianAccel = stats::median(.data$maxAccel)) %>%
+              medianAccel = median(.data$maxAccel)) %>%
     ungroup() %>%
-    arrange(medianSpeed)
+    arrange(.data$medianSpeed)
 
   engine <- connect_to_heroku_postgres()
   dbWriteTable(engine, 'speed_summary', df)

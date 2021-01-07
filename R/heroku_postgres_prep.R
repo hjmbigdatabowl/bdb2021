@@ -10,8 +10,10 @@
 heroku_postgres_inserts <- function() {
   engine <- connect_to_heroku_postgres()
 
-  results <- NULL
   model_preds <- NULL
+  arrival_results <- NULL
+  throw_results <- NULL
+
   load("~/documents/github/bdb2021/inst/data/drops_added_arrival.Rdata")
   df <- arrival_results %>%
     arrange(desc(.data$drops_added_arrival))
