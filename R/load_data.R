@@ -10,25 +10,22 @@ read_from_data <- function(file) {
 
 #' read_non_week_files read all of the non-PBP data
 #'
-#' @importFrom utils unzip
-#' @importFrom dplyr filter pull
-#' @importFrom rlang .data
-#' @importFrom stringr str_remove
-#' @return a list of data.frames with the loaded files
+#' @importFrom purrr discard keep map map_chr set_names
+#' @importFrom stringr str_remove_all
+#' @return a list of tibbles with the files
 #' @export
 read_non_week_files <- function() {
-  files <- unzip("inst/data/nfl-big-data-bowl-2021.zip", list = TRUE) %>%
-    filter(!grepl("week", .data$Name)) %>%
-    pull(.data$Name)
+  files <- list.files(path = 'inst/data', full.names = T) %>%
+    discard(function(x) grepl("week", x)) %>%
+    keep(function(x) grepl('.csv', x)) %>%
+    map_chr(str_remove_all, 'inst/data/')
 
-  fnames <- str_remove(files, ".csv")
+  names <- files %>%
+    map_chr(str_remove_all, '.csv')
 
-  out <- c()
-  for (i in 1:length(files)) {
-    out[[fnames[i]]] <- read_from_data(files[i])
-  }
-
-  return(out)
+  files %>%
+    set_names(names) %>%
+    map(read_from_data)
 }
 
 #' read_individual_week load a single week of PBP data
@@ -56,18 +53,9 @@ read_individual_week <- function(week) {
 aggregate_week_files <- function() {
   list.files("inst/data/") %>%
     keep(function(x) grepl("week", x)) %>%
-    discard(function(x) grepl("coverages_week1.csv", x)) %>%
+    discard(function(x) x == 'coverages_week1.csv') %>%
     map(read_from_data) %>%
     bind_rows()
-}
-
-#' read_targets load targeted receiver data
-#'
-#' @importFrom readr read_csv
-#' @return a data.frame with the targets data
-#' @export
-read_targets <- function() {
-  read_csv("inst/data/targetedReceiver.csv", col_types = cols())
 }
 
 #' read_pff load PFF grades
