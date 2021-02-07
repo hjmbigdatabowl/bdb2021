@@ -7,7 +7,7 @@
 read_non_week_files()
 }
 \value{
-a list of data.frames with the loaded files
+a list of tibbles with the files
 }
 \description{
 read_non_week_files read all of the non-PBP data
