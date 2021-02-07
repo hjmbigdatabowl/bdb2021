@@ -10,23 +10,27 @@
 build_raw_stat_table <- function() {
   position_data <- aggregate_week_files()
 
-  DEFENSE_POSITIONS <- get_constants('defense_positions')
+  DEFENSE_POSITIONS <- get_constants("defense_positions")
 
   df <- position_data %>%
     filter(.data$position %in% DEFENSE_POSITIONS) %>%
     group_by(.data$nflId, .data$playId, .data$gameId) %>%
-    summarise(maxSpeed = max(.data$s),
-              maxAccel = max(.data$a)) %>%
+    summarise(
+      maxSpeed = max(.data$s),
+      maxAccel = max(.data$a)
+    ) %>%
     ungroup() %>%
     group_by(.data$nflId) %>%
-    summarise(plays = n(),
-              topSpeed = max(.data$maxSpeed),
-              medianSpeed = median(.data$maxSpeed),
-              topAccel = max(.data$maxAccel),
-              medianAccel = median(.data$maxAccel)) %>%
+    summarise(
+      plays = n(),
+      topSpeed = max(.data$maxSpeed),
+      medianSpeed = median(.data$maxSpeed),
+      topAccel = max(.data$maxAccel),
+      medianAccel = median(.data$maxAccel)
+    ) %>%
     ungroup() %>%
     arrange(.data$medianSpeed)
 
   engine <- connect_to_heroku_postgres()
-  dbWriteTable(engine, 'speed_summary', df)
+  dbWriteTable(engine, "speed_summary", df)
 }

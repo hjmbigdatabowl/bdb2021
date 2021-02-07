@@ -8,14 +8,14 @@
 #' @export
 #'
 connect_to_heroku_postgres <- function() {
-  if (Sys.getenv('ENVIRONMENT') == 'production') {
-    host <- Sys.getenv('HP_HOST')
-    dbname <- Sys.getenv('HP_DBNAME')
-    port <- Sys.getenv('HP_PORT')
-    user <- Sys.getenv('HP_USER')
-    pass <- Sys.getenv('HP_PASS')
+  if (Sys.getenv("ENVIRONMENT") == "production") {
+    host <- Sys.getenv("HP_HOST")
+    dbname <- Sys.getenv("HP_DBNAME")
+    port <- Sys.getenv("HP_PORT")
+    user <- Sys.getenv("HP_USER")
+    pass <- Sys.getenv("HP_PASS")
   } else {
-    x <- fromJSON(file = 'inst/keys/creds.json')[[1]]
+    x <- fromJSON(file = "inst/keys/creds.json")[[1]]
     host <- x$host
     dbname <- x$dbname
     port <- x$port
@@ -24,11 +24,11 @@ connect_to_heroku_postgres <- function() {
   }
 
   dbConnect(Postgres(),
-            dbname = dbname,
-            host = host,
-            port = port,
-            user = user,
-            password = pass,
-            sslmode = "require"
+    dbname = dbname,
+    host = host,
+    port = port,
+    user = user,
+    password = pass,
+    sslmode = "require"
   )
 }

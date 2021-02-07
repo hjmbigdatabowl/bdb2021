@@ -170,7 +170,8 @@ make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE)
       plays = n(), .groups = "drop"
     ) %>%
     mutate(
-      drops_perplay_arrival = .data$drops_added_arrival / .data$plays) %>%
+      drops_perplay_arrival = .data$drops_added_arrival / .data$plays
+    ) %>%
     left_join(nonweek$players, by = c("nflId" = "nflId")) %>%
     select(.data$nflId, .data$displayName, .data$position, .data$plays, .data$drops_added_arrival, .data$drops_perplay_arrival) %>%
     left_join(defender_teams, by = "nflId") %>%
@@ -224,7 +225,7 @@ make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE)
     gt_theme_538()
 
   throw_results <- throw_data %>%
-    left_join(arrival_data %>% select(.data$gameId, .data$playId, .data$arrival_preds), by = c('gameId', 'playId')) %>%
+    left_join(arrival_data %>% select(.data$gameId, .data$playId, .data$arrival_preds), by = c("gameId", "playId")) %>%
     mutate(
       marginal = .data$throw_preds - .data$arrival_preds
     ) %>%
@@ -246,7 +247,8 @@ make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE)
       plays = n(), .groups = "drop"
     ) %>%
     mutate(
-      drops_perplay_throw = .data$drops_added_throw / .data$plays) %>%
+      drops_perplay_throw = .data$drops_added_throw / .data$plays
+    ) %>%
     left_join(nonweek$players, by = c("nflId" = "nflId")) %>%
     select(.data$nflId, .data$displayName, .data$position, .data$plays, .data$drops_added_throw, .data$drops_perplay_throw) %>%
     drop_na(.data$drops_added_throw) %>%
@@ -266,7 +268,7 @@ make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE)
     select(.data$rank, .data$position, .data$nflId, .data$displayName, .data$team_logo_espn, .data$plays, .data$drops_added_throw, .data$drops_perplay_throw) %>%
     arrange_by(show_top)
 
-  throw_tab <- throw_results  %>%
+  throw_tab <- throw_results %>%
     filter(.data$plays > playcutoff) %>%
     head(num) %>%
     gt() %>%
@@ -302,8 +304,8 @@ make_catch_prob_table <- function(num = 1000, playcutoff = 300, show_top = TRUE)
 
   gtsave(arrival_tab, "catch_prob_rankings_arrival.png", path = "inst/tables")
   gtsave(throw_tab, "catch_prob_rankings_throw.png", path = "inst/tables")
-  save(arrival_results, file = 'inst/data/drops_added_arrival.Rdata')
-  save(throw_results, file = 'inst/data/drops_added_throw.Rdata')
+  save(arrival_results, file = "inst/data/drops_added_arrival.Rdata")
+  save(throw_results, file = "inst/data/drops_added_throw.Rdata")
 
   return(list(
     arrival_results = arrival_results,
@@ -428,54 +430,60 @@ make_tendency_table <- function(data, model) {
 #' @import dplyr
 #'
 #'
-load_player_summary_table <- function(){
+load_player_summary_table <- function() {
   engine <- connect_to_heroku_postgres()
 
   catch_throw_agg <- engine %>%
-    tbl('drops_added_throw') %>%
+    tbl("drops_added_throw") %>%
     rename(plays_throw = .data$plays) %>%
     collect()
 
   catch_arrival_agg <- engine %>%
-    tbl('drops_added_arrival') %>%
+    tbl("drops_added_arrival") %>%
     rename(plays_arrival = .data$plays) %>%
     collect()
 
   target_agg <- engine %>%
-    tbl('target_data_aggregated') %>%
+    tbl("target_data_aggregated") %>%
     collect()
 
 
   speed_dat <- engine %>%
-    tbl('speed_summary') %>%
+    tbl("speed_summary") %>%
     collect() %>%
     select(-.data$plays)
 
   df <- target_agg %>%
     filter(.data$plays > 50) %>%
     left_join(catch_throw_agg %>% select(.data$nflId, .data$plays_throw, .data$drops_added_throw),
-                     by = "nflId") %>%
+      by = "nflId"
+    ) %>%
     left_join(catch_arrival_agg %>% select(.data$nflId, .data$plays_arrival, .data$drops_added_arrival),
-                     by = "nflId") %>%
-    left_join(speed_dat, by="nflId") %>%
-    mutate(regressedDropsThrow = .data$drops_added_throw / .data$plays_throw,
-                  regressedDropsArrival = .data$drops_added_arrival / .data$plays_arrival,
-                  dropdownName = paste(.data$position, " ", .data$displayName, " (", .data$defendingTeam, ")", sep=""))
+      by = "nflId"
+    ) %>%
+    left_join(speed_dat, by = "nflId") %>%
+    mutate(
+      regressedDropsThrow = .data$drops_added_throw / .data$plays_throw,
+      regressedDropsArrival = .data$drops_added_arrival / .data$plays_arrival,
+      dropdownName = paste(.data$position, " ", .data$displayName, " (", .data$defendingTeam, ")", sep = "")
+    )
 
   summary_stats <- df %>%
     group_by(.data$position) %>%
-    summarise(meanCoverage = mean(.data$regressedCoverage),
-                     sdCoverage = sd(.data$regressedCoverage),
-                     meanDeterrence = mean(.data$regressedDeterrence),
-                     sdDeterrence = sd(.data$regressedDeterrence),
-                     meanDropsThrow = mean(.data$regressedDropsThrow, na.rm = T),
-                     sdDropsThrow = sd(.data$regressedDropsThrow, na.rm = T),
-                     meanDropsArrival = mean(.data$regressedDropsArrival, na.rm = T),
-                     sdDropsArrival = sd(.data$regressedDropsArrival, na.rm = T),
-                     .groups = 'drop')
+    summarise(
+      meanCoverage = mean(.data$regressedCoverage),
+      sdCoverage = sd(.data$regressedCoverage),
+      meanDeterrence = mean(.data$regressedDeterrence),
+      sdDeterrence = sd(.data$regressedDeterrence),
+      meanDropsThrow = mean(.data$regressedDropsThrow, na.rm = T),
+      sdDropsThrow = sd(.data$regressedDropsThrow, na.rm = T),
+      meanDropsArrival = mean(.data$regressedDropsArrival, na.rm = T),
+      sdDropsArrival = sd(.data$regressedDropsArrival, na.rm = T),
+      .groups = "drop"
+    )
 
   df <- df %>%
-    inner_join(summary_stats, by="position") %>%
+    inner_join(summary_stats, by = "position") %>%
     mutate(
       coverageZ = (.data$regressedCoverage - .data$meanCoverage) / .data$sdCoverage,
       coverageGrade = 100 * pnorm(.data$coverageZ),
@@ -508,13 +516,14 @@ build_final_leaderboard <- function() {
   data(teams_colors_logos, envir = environment())
   summary_dat <- load_player_summary_table() %>%
     left_join(teams_colors_logos %>% select(.data$team_abbr, .data$team_logo_espn),
-              by = c("defendingTeam" = "team_abbr"))
+      by = c("defendingTeam" = "team_abbr")
+    )
 
   total_table <- summary_dat %>%
     arrange(-.data$totalGrade) %>%
     head(15) %>%
     select(.data$displayName, .data$team_logo_espn, .data$coverageGrade, .data$deterrenceGrade, .data$dropsThrowGrade, .data$dropsArrivalGrade, .data$totalGrade) %>%
-    gt()  %>%
+    gt() %>%
     text_transform(
       locations = cells_body(vars("team_logo_espn")),
       fn = function(x) {
@@ -536,7 +545,8 @@ build_final_leaderboard <- function() {
       dropsThrowGrade = "Closing",
       dropsArrivalGrade = "Breakups",
       totalGrade = "Total"
-    ) %>% data_color(
+    ) %>%
+    data_color(
       columns = vars("coverageGrade", "deterrenceGrade", "dropsThrowGrade", "dropsArrivalGrade", "totalGrade"),
       colors = col_numeric(
         palette = c("red", "white", "blue"),
@@ -545,7 +555,7 @@ build_final_leaderboard <- function() {
     ) %>%
     tab_footnote(
       footnote = "538 table format courtesy Tom Mock from themockup.blog",
-      locations=cells_title()
+      locations = cells_title()
     ) %>%
     gt_theme_538()
 

@@ -9,20 +9,20 @@
 #'
 run_catch_prob_tuning_pipeline <- function(throw_or_arr = "", overnightmode = TRUE, overnightcores = 4) {
   set.seed(14159)
-  df <- switch (throw_or_arr,
-                't' = do_catch_prob_throw_feat_eng() %>%
-                  select(
-                    .data$gameId, .data$playId, .data$dist_to_def_1:.data$veloToIntercept_def_11, .data$max_throw_velo, .data$throwdist,
-                    .data$numberOfPassRushers, .data$targetXThrow, .data$targetYThrow, .data$footballXArr, .data$footballYArr,
-                    .data$conditions, .data$temperature, .data$targetSThrow, .data$targetAThrow, .data$skill, .data$height, .data$outcome
-                  ),
-                'a' = do_catch_prob_arrival_feat_eng() %>%
-                  select(
-                    .data$gameId, .data$playId, .data$dist_to_def_1:.data$grouped_def_pos_11, .data$max_throw_velo, .data$throwdist,
-                    .data$numberOfPassRushers, .data$targetXArrival, .data$targetYArrival, .data$footballXArr, .data$footballYArr,
-                    .data$conditions, .data$temperature, .data$targetSArrival, .data$targetAArrival, .data$skill, .data$height, .data$outcome
-                  )
-              )
+  df <- switch(throw_or_arr,
+    "t" = do_catch_prob_throw_feat_eng() %>%
+      select(
+        .data$gameId, .data$playId, .data$dist_to_def_1:.data$veloToIntercept_def_11, .data$max_throw_velo, .data$throwdist,
+        .data$numberOfPassRushers, .data$targetXThrow, .data$targetYThrow, .data$footballXArr, .data$footballYArr,
+        .data$conditions, .data$temperature, .data$targetSThrow, .data$targetAThrow, .data$skill, .data$height, .data$outcome
+      ),
+    "a" = do_catch_prob_arrival_feat_eng() %>%
+      select(
+        .data$gameId, .data$playId, .data$dist_to_def_1:.data$grouped_def_pos_11, .data$max_throw_velo, .data$throwdist,
+        .data$numberOfPassRushers, .data$targetXArrival, .data$targetYArrival, .data$footballXArr, .data$footballYArr,
+        .data$conditions, .data$temperature, .data$targetSArrival, .data$targetAArrival, .data$skill, .data$height, .data$outcome
+      )
+  )
 
   train <- df %>%
     sample_frac(.8)
@@ -50,8 +50,8 @@ run_catch_prob_tuning_pipeline <- function(throw_or_arr = "", overnightmode = TR
 #' @export
 #'
 run_catch_prob_tuning_pipelines <- function(overnightmode = TRUE, overnightcores = 4) {
-  run_catch_prob_tuning_pipeline('a', overnightmode, overnightcores)
-  run_catch_prob_tuning_pipeline('t', overnightmode, overnightcores)
+  run_catch_prob_tuning_pipeline("a", overnightmode, overnightcores)
+  run_catch_prob_tuning_pipeline("t", overnightmode, overnightcores)
   make_catch_prob_table(1000, 50)
 
   return(invisible(NULL))
@@ -62,29 +62,31 @@ run_catch_prob_tuning_pipelines <- function(overnightmode = TRUE, overnightcores
 #' @importFrom magrittr %>%
 #' @importFrom dplyr sample_frac setdiff
 #' @export
-run_target_prob_tuning_pipeline <- function(tune_file_name){
-  set.seed(62-36)
+run_target_prob_tuning_pipeline <- function(tune_file_name) {
+  set.seed(62 - 36)
   target_df <- do_target_prob_feature_eng()
 
   train_df <- target_df %>%
     group_by(.data$gameId, .data$playId) %>%
-    slice_sample(prop=0.8) %>%
+    slice_sample(prop = 0.8) %>%
     ungroup()
 
   test_df <- target_df %>%
     setdiff(train_df) %>%
     ungroup()
 
-  if(tune_file_name != ""){
+  if (tune_file_name != "") {
     target_prob_tuning_results <- build_target_prob_tune_results(tune_file_name)
-  } else{
+  } else {
     target_prob_tuning_results <- tune_target_prob_xgb(train_df)
   }
 
-  target_prob_models <- fit_target_prob_xgb(workflow = target_prob_tuning_results$workflow,
-                                            pars = target_prob_tuning_results$parameters,
-                                            data_split = target_prob_tuning_results$data_split,
-                                            data = target_prob_tuning_results$data)
+  target_prob_models <- fit_target_prob_xgb(
+    workflow = target_prob_tuning_results$workflow,
+    pars = target_prob_tuning_results$parameters,
+    data_split = target_prob_tuning_results$data_split,
+    data = target_prob_tuning_results$data
+  )
   prior_target_model <- fit_prior_target_prob(train_df)
   scale_model <- fit_logit_target_platt_scaler(target_prob_models$final_xgb, train_df)
 
@@ -98,14 +100,16 @@ run_target_prob_tuning_pipeline <- function(tune_file_name){
 #' @importFrom magrittr %>%
 #' @export
 #'
-build_target_prob_tune_results <- function(file_name){
+build_target_prob_tune_results <- function(file_name) {
   xgb_spec <- xgb_res <- xgb_wf <- best_auc <- data_folds <- data_split <- NULL
   load(file_name)
-  return(list(model_specification = xgb_spec,
-              tune_parameters = xgb_res,
-              workflow = xgb_wf,
-              parameters = best_auc,
-              data_folds = data_folds,
-              data = data,
-              data_split = data_split))
+  return(list(
+    model_specification = xgb_spec,
+    tune_parameters = xgb_res,
+    workflow = xgb_wf,
+    parameters = best_auc,
+    data_folds = data_folds,
+    data = data,
+    data_split = data_split
+  ))
 }

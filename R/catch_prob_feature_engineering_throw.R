@@ -104,9 +104,11 @@ get_target_location_at_throw <- function(pbp, football_data, targeted_receiver) 
 #'
 get_heights <- function() {
   read_non_week_files()$players %>%
-    separate(.data$height, into = c('ft', 'inches'), sep = '-', fill = 'left', convert = TRUE) %>%
-    mutate(ft = replace_na(.data$ft, 0),
-           height = 12 * .data$ft + .data$inches) %>%
+    separate(.data$height, into = c("ft", "inches"), sep = "-", fill = "left", convert = TRUE) %>%
+    mutate(
+      ft = replace_na(.data$ft, 0),
+      height = 12 * .data$ft + .data$inches
+    ) %>%
     select(.data$nflId, .data$height)
 }
 
@@ -178,7 +180,7 @@ create_throw_vectors <- function(football_data, throw_midpoint_frame_id) {
   return(
     throw_midpoint_frame_id %>%
       inner_join(football_data, by = c("gameId", "playId", "frameId")) %>%
-      rename(x = .data$footballX, y = .data$footballY) %>%  ## TODO: will change football_data style
+      rename(x = .data$footballX, y = .data$footballY) %>% ## TODO: will change football_data style
       pivot_wider(
         id_cols = c(.data$gameId, .data$playId),
         names_from = .data$frame,
