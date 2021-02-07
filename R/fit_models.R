@@ -74,7 +74,6 @@ fit_target_prob_rf <- function(workflow, pars, data_split, data) {
 #' @export
 #'
 fit_target_prob_xgb <- function(workflow, pars, data_split, data) {
-
   final_xgb <- tune::finalize_workflow(
     workflow,
     pars
@@ -85,8 +84,10 @@ fit_target_prob_xgb <- function(workflow, pars, data_split, data) {
 
   save(final_xgb, final_res, file = "inst/models/target_prob_xgb.Rdata")
 
-  return(list(final_xgb = final_xgb,
-              final_res = final_res))
+  return(list(
+    final_xgb = final_xgb,
+    final_res = final_res
+  ))
 }
 #' fit_logit_platt_scaler fit the Platt scaler to calibrate the xgboost predictions
 #'
@@ -132,11 +133,13 @@ fit_logit_platt_scaler <- function(model, data) {
 fit_logit_target_platt_scaler <- function(model, data) {
   . <- NULL
   preds <- data %>%
-    mutate(predprob = predict(model, ., type = 'prob')$.pred_1,
-           target = as.factor(.data$targetFlag))
+    mutate(
+      predprob = predict(model, ., type = "prob")$.pred_1,
+      target = as.factor(.data$targetFlag)
+    )
 
   logit_model <- logistic_reg() %>%
-    set_engine('glm') %>%
+    set_engine("glm") %>%
     fit(target ~ predprob, data = preds)
 
   return(logit_model)
@@ -200,8 +203,8 @@ stepwise_target_prob_predict <- function(data, rf_model, logit_model) {
 stepwise_target_prob_predict_xgb <- function(data, xgb_model, logit_model) {
   . <- NULL
   preds <- data %>%
-    mutate(predprob = predict(xgb_model, ., type = 'prob')$.pred_1) %>%
-    mutate(calibratedprob = predict(logit_model, ., type = 'prob')$.pred_1)
+    mutate(predprob = predict(xgb_model, ., type = "prob")$.pred_1) %>%
+    mutate(calibratedprob = predict(logit_model, ., type = "prob")$.pred_1)
 
   return(preds$calibratedprob)
 }
@@ -216,11 +219,11 @@ stepwise_target_prob_predict_xgb <- function(data, xgb_model, logit_model) {
 #' @importFrom stats predict
 #' @export
 #'
-fit_prior_target_prob <- function(data){
+fit_prior_target_prob <- function(data) {
   data <- data
 
   prior_target_model <- logistic_reg() %>%
-    set_engine('glm') %>%
+    set_engine("glm") %>%
     fit(targetFlag ~ expectedTargetShare, data = data)
 
   return(prior_target_model)

@@ -241,4 +241,3 @@ do_catch_prob_arrival_feat_eng <- function(weeks_to_use = 1:17) {
   save_encrypted(df, file = "inst/data/catch_prob_features_arrival.Rdata")
   return(df)
 }
-

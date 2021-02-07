@@ -41,17 +41,19 @@ load_encrypted <- function(file = "") {
 #' @export
 #'
 load_key_and_nonce <- function() {
-  if (Sys.getenv('ENVIRONMENT') == 'production') {
+  if (Sys.getenv("ENVIRONMENT") == "production") {
     key <- Sys.getenv("ENCRYPTION_KEY")
     nonce <- Sys.getenv("NONCE")
   } else {
-    load('inst/keys/sodium_key.Rdata', envir = environment())
+    load("inst/keys/sodium_key.Rdata", envir = environment())
   }
 
   key <- convert_secret(key)
   nonce <- convert_secret(nonce)
-  return(list(key = key,
-              nonce = nonce))
+  return(list(
+    key = key,
+    nonce = nonce
+  ))
 }
 
 #' convert_secret
@@ -64,10 +66,8 @@ load_key_and_nonce <- function() {
 #'
 convert_secret <- function(secret) {
   secret %>%
-    str_split(' ') %>%
+    str_split(" ") %>%
     unlist() %>%
     as.integer() %>%
     packBits()
 }
-
-

@@ -247,7 +247,7 @@ do_target_prob_feature_eng <- function(weeks_to_use = 1:17) {
       oAdj = atan2(.data$xAdj, .data$yAdj) * 180 / pi
     ) %>%
     filter(complete.cases(.)) %>%
-    left_join(weather, by = 'gameId')
+    left_join(weather, by = "gameId")
 
   throw_target_data <- add_receiver_target_rates(throw_target_data)
 
@@ -255,8 +255,10 @@ do_target_prob_feature_eng <- function(weeks_to_use = 1:17) {
     group_by(.data$gameId, .data$playId) %>%
     mutate(playTargets = sum(.data$regressedTargets)) %>%
     ungroup() %>%
-    mutate(expectedTargetShare = .data$regressedTargets / .data$playTargets,
-           targetFlag = as.factor(.data$targetFlag))
+    mutate(
+      expectedTargetShare = .data$regressedTargets / .data$playTargets,
+      targetFlag = as.factor(.data$targetFlag)
+    )
 
   rm(nonweek, play_metadata, game_metadata, plays, pbp, play_targeted_receiver, receiver_throw_position, football_start_pos, defenders, qb_throw_position)
 
